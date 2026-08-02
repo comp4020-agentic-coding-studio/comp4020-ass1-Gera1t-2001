@@ -283,3 +283,77 @@ asked:
 For Assignment 1 specifically the brief fixes these numbers: **400--600 words,
 three or four moments, not more.** The strongest moments are the ones where a
 correction landed in this harness rather than in another prompt.
+
+## What this prototype needs (Assignment 1: chokepoints)
+
+The core interaction, stated once so everything else can be checked against it:
+
+> **Closing a chokepoint re-allocates every oil flow that transits it.** Each
+> flow tries a sea reroute that avoids every closed chokepoint, then bypass
+> pipelines up to their capacity, and whatever fits in neither is **stranded**.
+> The stranded total in million barrels per day is what the visitor watches
+> move.
+
+`spec/assignment1.test.ts` asserts that contract at the model level, against
+`allocate()` rather than against the DOM, so the tests survive a change of
+rendering approach. Keep them that way — a test that reaches into markup has to
+be rewritten every time the page changes, and stops being backpressure.
+
+### Data honesty
+
+This is the rule the whole piece stands on. A prototype arguing that people
+misjudge which chokepoints matter has no standing if its own numbers are
+invented.
+
+- **Every figure carries a `source` string.** Chokepoints, flows, legs and
+  bypasses all have the field, and `spec/assignment1.test.ts` fails if one is
+  empty. A number without a citation does not go in.
+- **Mark derived and illustrative figures as such**, in the `source` text, in
+  capitals. `DERIVED` means apportioned or residual — computed so named flows
+  reconcile to a published total. `ILLUSTRATIVE` means order-of-magnitude only
+  and not load-bearing (the two control flows). Never let a derived figure read
+  as a measured one.
+- **The graph is a calibrated snapshot, not a routing engine.** Transit days
+  are estimates tuned to published anchors, and the anchors are named in
+  `src/data/network.ts`. Say "calibrated estimate", never imply precision the
+  data does not have.
+- **State coverage limits rather than hiding them.** Modelled Malacca traffic
+  is below EIA's figure because only Persian Gulf origins are modelled. That
+  belongs in a comment and on the page, not in a footnote nobody reads.
+- **One unit.** Everything is million barrels per day. LNG is measured in
+  Bcf/d, so LNG stays out — two units on one screen means a stranded total
+  that cannot be added up.
+- **Structural claims only, never claims about intent.** "This strait has no
+  sea alternative and 4.7 mb/d of pipeline bypass" is in scope. Who might close
+  it, or why, is not. The argument is about geography and capacity; the moment
+  it becomes commentary it stops being an explainer.
+
+### Modelling choices that change the numbers
+
+Both of these are judgement calls, not facts. They are documented in
+`src/model/allocate.ts` and they need to stay documented — a reader who cannot
+see the assumption cannot check the result.
+
+- **Bypasses are priced above their transit time** (`BYPASS_PENALTY`), because
+  sea transport is cheaper per barrel than a pipeline needing two ship-to-shore
+  transfers. Tuned so no bypass carries anything at baseline and each is
+  reached for when its own chokepoint closes.
+- **Scarce capacity is shared pro rata**, not first-come. First-come was tried
+  and rejected: with Hormuz shut it gave all 4.7 mb/d of bypass to whichever
+  flow happened to be declared first and zeroed the rest, which is an artefact
+  of list order rather than a result. Pro rata is also the neutral rule, which
+  the intent constraint above requires.
+
+### Two things the model got right that look wrong at first
+
+Both were caught by a failing test and are worth not re-breaking:
+
+- **Closing Bab el-Mandeb barely delays Gulf-to-Europe crude** — it moves onto
+  Petroline, which reaches Yanbu *north* of the strait. The route changes
+  without the clock moving much. A "did anything change" check therefore has to
+  compare the path as well as the days and the volume.
+- **Petroline is throttled, not severed, when Suez shuts too.** SUMED runs from
+  Ain Sukhna to the Mediterranean and bypasses the canal without needing the
+  Red Sea exits, so Petroline's throughput is capped by SUMED's 2.5 mb/d rather
+  than dropping to zero. The first draft of the test asserted zero and was
+  wrong about the geography.

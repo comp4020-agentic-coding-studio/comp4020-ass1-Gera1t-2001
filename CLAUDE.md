@@ -210,6 +210,17 @@ what held true regardless of what was being built.
 - **Any state of the model can be screenshotted directly** via the URL hash
   (`#closed=hormuz,suez`), so verifying an interaction needs no browser
   driver — just a second screenshot at a different URL.
+- **Old-headless `--screenshot` does not report scroll position reliably when
+  the URL carries a section fragment.** A screenshot of `#chokepoints` came
+  back as a uniform dark rectangle and looked exactly like a page that had
+  failed to build its interface. It had not: `--dump-dom` on the same URL
+  showed all seven switches and all eleven table rows present. Screenshot the
+  `#closed=` state URLs, which do not scroll, and reach for `--dump-dom` before
+  concluding that anything is missing.
+- **A screenshot is evidence of what rendered, not of why.** When one looks
+  wrong, get a second, independent reading — `--dump-dom`, a computed value, a
+  test — before changing code. Two of the three "bugs" found by screenshot in
+  this repo were real; the third was the tool.
 - **Say plainly what wasn't checked.** If a change was only verified by
   `pnpm check` and not by looking at a real render, say so instead of implying
   full verification. That gap is what let the viewport bug above ship in the

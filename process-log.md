@@ -238,3 +238,32 @@ these entries at the end; it is not written directly.
   two-column standfirst and a cropped phone map so the map clears the fold at
   both marking viewports. All four verified by screenshot at 1920×1080 and
   390×844.
+
+---
+
+- **Date/time:** 2026-08-03, early hours
+- **Tag:** `[judgement]`
+- **What happened:** I had never looked at the switches or the flow table
+  rendered — only the top of the page. A tall screenshot showed both were fine,
+  but a screenshot of `#chokepoints` came back as a uniform dark rectangle. It
+  looked exactly like an interface that had failed to build.
+- **What I did instead of the obvious thing:** I had already told the user this
+  was a real bug, and the obvious next step was to ship the fix I had reasoned
+  out. Instead I checked the claim with a second, independent reading:
+  `--dump-dom` on the same URL returned seven switches, eleven table rows and
+  the readout, byte-identical to the no-fragment load. The page was fine; the
+  screenshot tool does not report scroll position reliably when the URL carries
+  a section fragment. I corrected the claim rather than leaving a wrong
+  diagnosis standing.
+- **How I knew it was right:** The DOM dumps for `/` and `/#chokepoints` were
+  identical on every count I checked. Reasoning it through afterwards agrees:
+  a deferred module script runs before `DOMContentLoaded`, so the sections
+  exist by the time a real browser resolves the fragment. I kept the
+  `scrollIntoView` guard anyway — not for the bug I thought I had, but for the
+  genuine slow-connection race where the script has not run yet, which is
+  squarely in the artefact criterion's "holds up on a slow connection" band.
+- **Citation:** this commit; CLAUDE.md → "A screenshot is evidence of what
+  rendered, not of why", and the fragment guard in `main.ts`.
+- **Also in this commit (routine):** reroutability classes colour-coded in the
+  switch list, and the map cropped to a 1000×380 frame so the empty polar bands
+  stop padding it.

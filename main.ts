@@ -27,4 +27,18 @@ if (root) {
   });
 
   render();
+
+  // The browser resolves a fragment against the page as it was parsed — before
+  // any of this exists. It scrolls to an offset that is correct for a page of
+  // masthead-plus-footer, then the interface is inserted above and that offset
+  // lands somewhere in the middle of the map. Re-apply the fragment now that
+  // the sections it names are actually there.
+  const fragment = location.hash;
+  if (fragment.length > 1 && !fragment.startsWith("#closed")) {
+    try {
+      document.querySelector(fragment)?.scrollIntoView();
+    } catch {
+      // Not a valid selector — someone hand-edited the hash. Leave it alone.
+    }
+  }
 }

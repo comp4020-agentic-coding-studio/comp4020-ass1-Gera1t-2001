@@ -184,6 +184,11 @@ h1 {
 .map {
   display: block;
   width: 100%;
+
+  /* Wider than the projection's natural 2:1 so the empty polar bands are
+     cropped by `slice` rather than padding the frame. Nothing routes through
+     the Arctic or Antarctica, and the continents gain about a third. */
+  aspect-ratio: 1000 / 380;
   height: auto;
   background: var(--water);
   border: 1px solid var(--edge);
@@ -442,6 +447,20 @@ h2 {
   letter-spacing: 0.12em;
   text-transform: uppercase;
   color: var(--ink-faint);
+}
+
+/* The three classes, scannable down a list that is sorted by volume. The
+   mismatch between the two orderings is the whole argument. */
+.switch__class--none {
+  color: var(--stopped);
+}
+
+.switch__class--long {
+  color: var(--detour);
+}
+
+.switch__class--short {
+  color: var(--moving);
 }
 
 .switch__note {

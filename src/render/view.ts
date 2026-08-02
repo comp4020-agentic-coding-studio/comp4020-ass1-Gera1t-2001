@@ -156,7 +156,16 @@ export function mount(
     button.append(
       el("span", { class: "switch__name" }, chokepoint.name),
       el("span", { class: "switch__flow" }, `${mbd(chokepoint.oilFlowMbd)} mb/d`),
-      el("span", { class: "switch__class" }, rerouteLabel(chokepoint.reroutability)),
+      // Colour-coded by class, so the list can be scanned rather than only
+      // read. This does not give the answer away — the answer is "volume does
+      // not predict consequence", and putting the two side by side in a list
+      // sorted by volume is what makes that visible at a glance. The
+      // interaction is still what puts a number on it.
+      el(
+        "span",
+        { class: `switch__class switch__class--${chokepoint.reroutability}` },
+        rerouteLabel(chokepoint.reroutability),
+      ),
       el("span", { class: "switch__note" }, chokepoint.note),
       el("span", { class: "switch__state", "data-testid": `state-${chokepoint.id}` }, "open"),
     );

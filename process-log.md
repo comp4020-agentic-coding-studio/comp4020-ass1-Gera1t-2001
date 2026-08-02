@@ -154,3 +154,55 @@ these entries at the end; it is not written directly.
   covered by four tests in `spec/interaction.test.ts`.
 - **Citation:** this commit; `src/ui/permalink.ts` and the "a state is
   shareable" block in `spec/interaction.test.ts`.
+
+---
+
+- **Date/time:** 2026-08-03, just after midnight
+- **Tag:** `[harness]`
+- **What happened:** Reviewing the built page against the brief, I found the
+  readout only reported stranded volume. Four of the seven chokepoints strand
+  nothing, so closing Malacca — the largest oil chokepoint on earth — showed
+  `0.00` and read as a switch that did not work. The single most important
+  comparison in the piece was rendering as a bug.
+- **What I did instead of the obvious thing:** The obvious fix is to add a
+  "days added" number and move on. I added a test first — a UI-level
+  counterpart to the model's `no dead controls`, asserting that the readout
+  text changes for every one of the seven — so the failure mode cannot come
+  back silently under a future redesign. Then the panel gained a detour line
+  and a verdict, and the verdict sentence is generated from the result rather
+  than written per chokepoint, so it cannot drift out of step with the model.
+  That last choice caught an awkward case for free: the Danish Straits have no
+  sea alternative but still move 0.2 mb/d through the Kiel Canal, so a canned
+  "nothing gets out" would have been a lie. The generated version says "almost
+  nothing".
+- **How I knew it was right:** Screenshotted `#closed=malacca` and
+  `#closed=turkish` at 1920×1080 and read them side by side. Malacca: 0.00
+  stranded, four flows rerouted, "a short way around". Turkish Straits, a sixth
+  the size: 3.70 stranded, no route longer, "no way around". The argument now
+  arrives in two clicks instead of requiring the visitor to click all seven and
+  hold the comparison in their head.
+- **Citation:** this commit; the `no chokepoint reads as a broken switch` block
+  in `spec/interaction.test.ts`.
+
+---
+
+- **Date/time:** 2026-08-03, just after midnight
+- **Tag:** `[harness]`
+- **What happened:** Nothing in `pnpm check` measures contrast, and the
+  template's CLAUDE.md says wiring accessibility sensors is my work. On a dark
+  palette this is exactly where things go wrong quietly.
+- **What I did instead of the obvious thing:** Rather than eyeball it or reach
+  for axe-core and a browser, I wrote the check as arithmetic over the palette:
+  `spec/contrast.test.ts` parses the custom properties out of `styles.css` and
+  asserts a declared list of foreground/background pairings against WCAG AA. It
+  needs no browser, runs in a millisecond, and the pairing list is the part CSS
+  cannot express — which colour is used on which surface, and at what size.
+- **How I knew it was right:** It went red on first run and named the offender:
+  `--ink-faint (#4d5a6b) on --panel (#0e1725) is 2.56:1, needs 4.5:1`. That
+  colour was carrying the flow notes, the readout subtitle, the reroutability
+  labels and the table headers — all small text. I raised it and `--ink-dim`
+  together to keep the three-step hierarchy, then re-ran: 13 pass. The map's
+  flow colours were checked against the water at the 3:1 non-text threshold and
+  already passed.
+- **Citation:** this commit; `spec/contrast.test.ts` red → green, and the
+  palette change in `styles.css`.

@@ -140,6 +140,61 @@ describe("the core interaction, through the interface", () => {
   });
 });
 
+describe("no chokepoint reads as a broken switch", () => {
+  // The model-level version of this lives in assignment1.test.ts. This is the
+  // one that matters to a visitor: four of the seven strand nothing at all, so
+  // a panel that only reports stranded volume shows 0.00 for them and looks
+  // like the control did nothing. Whatever happened has to be legible.
+  const text = (page: ReturnType<typeof open>) =>
+    page.readout().textContent!.replace(/\s+/g, " ").trim();
+
+  it.each(CHOKEPOINTS.map((c) => [c.name, c.id] as const))(
+    "says something happened when %s closes",
+    (_name, id) => {
+      const page = open();
+      const before = text(page);
+      page.switchFor(id)!.click();
+      expect(text(page), `closing ${id} left the readout unchanged`).not.toBe(before);
+    },
+  );
+
+  it("reports a detour when nothing is stranded", () => {
+    const page = open();
+    page.switchFor("malacca")!.click();
+
+    // The largest oil chokepoint on earth strands nothing — that is the point,
+    // and it is only a point if the page says what did happen instead.
+    expect(page.strandedText()).toBe("0.00");
+    const detour = page.root.querySelector('[data-testid="detour"]')!.textContent!;
+    expect(detour).toMatch(/rerouted/);
+    expect(detour).toMatch(/\+\d/);
+  });
+
+  it("names which kind of fragile the visitor just found", () => {
+    const page = open();
+    const label = () =>
+      page.root.querySelector('[data-testid="verdict-class"]')!.textContent;
+    const verdict = () =>
+      page.root.querySelector('[data-testid="verdict"]')!.textContent!;
+
+    page.switchFor("malacca")!.click();
+    expect(label()).toBe("a short way around");
+    expect(verdict().length).toBeGreaterThan(0);
+
+    page.switchFor("malacca")!.click();
+    page.switchFor("turkish")!.click();
+    expect(label()).toBe("no way around");
+    expect(verdict()).toMatch(/stop/);
+  });
+
+  it("stays quiet about the class when several are closed at once", () => {
+    const page = open();
+    page.switchFor("malacca")!.click();
+    page.switchFor("turkish")!.click();
+    expect(page.root.querySelector('[data-testid="verdict-class"]')!.textContent).toBe("");
+  });
+});
+
 describe("a state is shareable", () => {
   it("round-trips through the URL hash", () => {
     const closed = new Set<ChokepointId>(["hormuz", "suez"]);

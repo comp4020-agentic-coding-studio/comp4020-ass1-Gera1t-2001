@@ -1,4 +1,4 @@
-import { CHOKEPOINTS } from "../data/chokepoints";
+import { CHOKEPOINTS, CHOKEPOINT_BY_ID } from "../data/chokepoints";
 import { FLOWS, TOTAL_MBD } from "../data/flows";
 import { LEGS } from "../data/network";
 import type { Allocation, ChokepointId } from "../model/types";
@@ -95,7 +95,30 @@ export function mount(
     { class: "readout__sub" },
     `of ${mbd(TOTAL_MBD)} modelled`,
   );
-  readout.append(readoutValue, readoutUnit, readoutSub);
+  // Stranded volume alone reports four of the seven chokepoints as zero, which
+  // reads as a broken switch rather than as the answer. The detour line is the
+  // other half of what happened, and the verdict says which of the two kinds
+  // of fragile the visitor just found.
+  const readoutDetour = el("span", {
+    class: "readout__detour",
+    "data-testid": "detour",
+  });
+  const readoutClass = el("span", {
+    class: "readout__class",
+    "data-testid": "verdict-class",
+  });
+  const readoutVerdict = el("span", {
+    class: "readout__verdict",
+    "data-testid": "verdict",
+  });
+  readout.append(
+    readoutValue,
+    readoutUnit,
+    readoutSub,
+    readoutDetour,
+    readoutClass,
+    readoutVerdict,
+  );
   figure.append(readout);
   root.append(figure);
 
@@ -205,13 +228,38 @@ export function mount(
   function update(allocation: Allocation): void {
     const closed = new Set(allocation.closed);
 
+    const rerouted = allocation.flows.filter((flow) => flow.addedDays > 0);
+    const worstDetour = Math.max(0, ...allocation.flows.map((flow) => flow.addedDays));
+
     readoutValue.textContent = mbd(allocation.strandedMbd);
+    readoutUnit.textContent = "mb/d stranded";
     readoutSub.textContent =
       allocation.strandedMbd > 0
         ? `${((allocation.strandedMbd / TOTAL_MBD) * 100).toFixed(0)}% of the ${mbd(TOTAL_MBD)} modelled`
-        : `of ${mbd(TOTAL_MBD)} modelled — everything is moving`;
-    readoutUnit.textContent = "mb/d stranded";
+        : `of ${mbd(TOTAL_MBD)} modelled`;
     readout.classList.toggle("readout--alarm", allocation.strandedMbd > 0);
+
+    if (allocation.closed.length === 0) {
+      readoutDetour.textContent = "Nothing closed. Every route is its shortest.";
+    } else if (rerouted.length === 0) {
+      readoutDetour.textContent = "No route got any longer.";
+    } else {
+      readoutDetour.textContent =
+        `${rerouted.length} ${rerouted.length === 1 ? "flow" : "flows"} rerouted` +
+        ` · +${worstDetour.toFixed(1)} days at worst`;
+    }
+
+    // Named only when one strait is shut, because with several closed there is
+    // no single thing to name — the numbers above are the answer then.
+    const only =
+      allocation.closed.length === 1
+        ? CHOKEPOINT_BY_ID.get(allocation.closed[0])
+        : undefined;
+    readoutClass.textContent = only ? rerouteLabel(only.reroutability) : "";
+    readoutVerdict.textContent = only
+      ? verdict(allocation.strandedMbd, rerouted.length, worstDetour)
+      : "";
+    readout.classList.toggle("readout--verdict", Boolean(only));
 
     for (const chokepoint of CHOKEPOINTS) {
       const shut = closed.has(chokepoint.id);
@@ -291,4 +339,27 @@ function rerouteLabel(reroutability: (typeof CHOKEPOINTS)[number]["reroutability
     case "short":
       return "a short way around";
   }
+}
+
+/**
+ * One sentence for what just happened, built from the result rather than
+ * written per chokepoint — so it cannot drift out of step with the model, and
+ * so the awkward cases stay honest. The Danish Straits have no sea
+ * alternative and still move 0.2 mb/d through the Kiel Canal; "nothing gets
+ * out" would be a lie, and this says "almost nothing" instead.
+ */
+function verdict(strandedMbd: number, reroutedFlows: number, worstDetour: number): string {
+  if (strandedMbd > 0) {
+    const share = reroutedFlows > 0 ? "The rest goes the long way round." : "";
+    return strandedMbd > 1
+      ? `${mbd(strandedMbd)} million barrels a day stop where they are. ${share}`.trim()
+      : `Almost nothing gets out. ${share}`.trim();
+  }
+  if (worstDetour >= 3) {
+    return `Every barrel still moves — up to ${worstDetour.toFixed(1)} days later than it did.`;
+  }
+  if (worstDetour > 0) {
+    return "Every barrel still moves, and barely any later. You would not notice.";
+  }
+  return "Nothing changed. Nothing here depended on it.";
 }

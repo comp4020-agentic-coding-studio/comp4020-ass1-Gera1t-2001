@@ -10,8 +10,8 @@
 
 :root {
   --ink: #dbe3ec;
-  --ink-dim: #7f8da0;
-  --ink-faint: #4d5a6b;
+  --ink-dim: #9fadbe;
+  --ink-faint: #788598;
   --deep: #060a10;
   --water: #0b1421;
   --panel: #0e1725;
@@ -174,6 +174,10 @@ h1 {
 
 .flow--detoured {
   stroke: var(--detour);
+
+  /* Not colour alone: a detour is dashed long, a pipeline dotted short, an
+     unaffected route solid. Three states, three patterns. */
+  stroke-dasharray: 8 4;
 }
 
 /* A pipeline is not a shipping lane and should never be mistaken for one. */
@@ -264,12 +268,44 @@ h1 {
   color: var(--ink-faint);
 }
 
+.readout__detour {
+  display: block;
+  margin-top: 0.9rem;
+  padding-top: 0.8rem;
+  border-top: 1px solid var(--edge);
+  font-size: 0.8rem;
+  color: var(--ink-dim);
+}
+
+.readout__class {
+  display: block;
+  margin-top: 0.85rem;
+  font-size: 0.72rem;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--detour);
+}
+
+.readout__verdict {
+  display: block;
+  margin-top: 0.3rem;
+  font-family: var(--serif);
+  font-size: 0.94rem;
+  line-height: 1.4;
+  color: var(--ink);
+}
+
+.readout:not(.readout--verdict) .readout__class,
+.readout:not(.readout--verdict) .readout__verdict {
+  display: none;
+}
+
 @media (width >= 64rem) {
   .readout {
     position: absolute;
     top: 1.5rem;
     right: 1.5rem;
-    width: 15.5rem;
+    width: 17.5rem;
     margin: 0;
     background: color-mix(in srgb, var(--panel) 88%, transparent);
     backdrop-filter: blur(3px);

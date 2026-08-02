@@ -1,5 +1,4 @@
 import { allocate } from "./src/model/allocate";
-import type { ChokepointId } from "./src/model/types";
 import { mount } from "./src/render/view";
 import type { View } from "./src/render/view";
 import { readHash, writeHash } from "./src/ui/permalink";

@@ -182,7 +182,34 @@ what held true regardless of what was being built.
   still be gotten without sudo: `apt-get download <pkg>` then
   `dpkg-deb -x <pkg>.deb .` to unpack the `.deb`s (fonts, missing shared libs
   such as `libnspr4`) into a local prefix, point the right env vars at it, and
-  run Playwright against that.
+  run Playwright against that. The working recipe, verified in this repo:
+
+  ```sh
+  # One-time: the Playwright chromium in ~/.cache is missing three libs.
+  mkdir -p ~/.local/chrome-libs && cd ~/.local/chrome-libs
+  apt-get download libnspr4 libnss3 libasound2t64
+  for d in *.deb; do dpkg-deb -x "$d" .; done
+
+  # Every time:
+  export LD_LIBRARY_PATH="$HOME/.local/chrome-libs/usr/lib/x86_64-linux-gnu:$LD_LIBRARY_PATH"
+  CHROME=~/.cache/ms-playwright/chromium-1234/chrome-linux64/chrome
+  pnpm build && pnpm preview --port 4173   # note the port it actually binds
+  $CHROME --headless --disable-gpu --no-sandbox --hide-scrollbars \
+    --virtual-time-budget=6000 --window-size=1920,1080 \
+    --screenshot=/tmp/desktop.png "http://localhost:<port>/#closed=hormuz"
+  ```
+
+- **Serve over HTTP, never `file://`.** A module script will not load from
+  `file://` — the page renders as unstyled markup with no interface at all,
+  which looks like a catastrophic bug and is only the protocol. `pnpm preview`
+  also matches how GitHub Pages actually serves the site.
+- **Check which port `pnpm preview` bound.** It silently moves to the next free
+  port when 4173 is taken — including by a preview left running from another
+  week's repo. Screenshotting the wrong port produces a perfect-looking render
+  of last week's prototype.
+- **Any state of the model can be screenshotted directly** via the URL hash
+  (`#closed=hormuz,suez`), so verifying an interaction needs no browser
+  driver — just a second screenshot at a different URL.
 - **Say plainly what wasn't checked.** If a change was only verified by
   `pnpm check` and not by looking at a real render, say so instead of implying
   full verification. That gap is what let the viewport bug above ship in the

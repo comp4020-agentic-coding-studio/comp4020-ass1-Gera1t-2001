@@ -3,22 +3,107 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>COMP4020 prototype</title>
+    <title>No way around — the chokepoints that hold up the world's oil</title>
+    <meta
+      name="description"
+      content="Close a strait and watch the oil stop. Some chokepoints have a detour. Three of them have nothing."
+    />
     <link rel="stylesheet" href="./styles.css" />
   </head>
   <body>
-    <header>
-      <nav aria-label="Primary">
-        <a href="./">Home</a>
+    <a class="skip" href="#chokepoints">Skip to the controls</a>
+
+    <header class="masthead">
+      <nav class="masthead__nav" aria-label="Sections">
+        <a href="#chokepoints">Chokepoints</a>
+        <a href="#flows">Flows</a>
+        <a href="#sources">Sources</a>
       </nav>
-    </header>
-    <main>
-      <h1>COMP4020 prototype</h1>
-      <p data-testid="intro">
-        Replace this with your prototype. This week's brief is on the course website;
-        <code>spec/README.md</code> explains how the checks in this repo relate to it.
+      <p class="masthead__kicker">Seven straits, 34.5 million barrels a day</p>
+      <h1>Some straits have a detour.<br />Three of them have nothing.</h1>
+      <p class="standfirst">
+        A map tells you where the sea is narrow. It does not tell you which
+        narrow places have another way round. Those are two completely
+        different kinds of fragile, and they look identical from above.
       </p>
+      <p class="standfirst standfirst--instruction">
+        <strong>Close one and find out.</strong> Every barrel that can reroute
+        will — by sea if there is a sea route, then through a bypass pipeline
+        until that pipeline is full. What fits in neither does not arrive late.
+        It does not move at all.
+      </p>
+    </header>
+
+    <main data-app>
+      <noscript>
+        <p class="noscript">
+          This explainer is an interactive model: you close chokepoints and it
+          re-routes the world's oil. It needs JavaScript to do that.
+        </p>
+      </noscript>
     </main>
+
+    <footer class="colophon" id="sources">
+      <h2>Where the numbers come from</h2>
+      <p>
+        Every figure on this page traces to one of three published sources. The
+        model is a calibrated snapshot, not a live routing engine — transit
+        times are estimates tuned to published anchors, accurate to about a day.
+      </p>
+      <ul class="sources">
+        <li>
+          <a
+            href="https://www.eia.gov/international/content/analysis/special_topics/World_Oil_Transit_Chokepoints"
+            >US Energy Information Administration, <cite>World Oil Transit Chokepoints</cite></a
+          >
+          — chokepoint volumes, bypass-pipeline capacities, and the country-level
+          flows through Hormuz. First half of 2025 unless noted.
+        </li>
+        <li>
+          <a href="https://portwatch.imf.org/">IMF PortWatch</a> — chokepoint
+          coordinates, from the satellite-AIS chokepoints database. Downloaded
+          as a static snapshot; this page makes no network requests.
+        </li>
+        <li>
+          <a href="https://pmc.ncbi.nlm.nih.gov/articles/PMC12644514/"
+            >Verschuur et al., <cite>Systemic impacts of disruptions at maritime
+            chokepoints</cite>, Nature Communications (2025)</a
+          >
+          — the three reroutability classes, which are the argument this page is
+          making.
+        </li>
+      </ul>
+      <h3>What this model leaves out</h3>
+      <ul class="caveats">
+        <li>
+          <strong>Oil only, in one unit.</strong> Everything here is million
+          barrels per day of crude and refined products. LNG is measured in
+          billion cubic feet per day, so it is excluded — two units on one
+          screen would make the stranded total unaddable.
+        </li>
+        <li>
+          <strong>Malacca is understated.</strong> Only Persian Gulf origins are
+          modelled, so the traffic shown through the Strait of Malacca is below
+          the 23.2 mb/d EIA reports. West African and Atlantic-basin crude also
+          uses it.
+        </li>
+        <li>
+          <strong>Two flows are illustrative.</strong> The Houston–Rotterdam and
+          Kozmino–Qingdao volumes are order-of-magnitude only. They exist so
+          there is something on the map that never moves; their exact size is
+          not load-bearing. Two more are marked derived in the source data —
+          apportioned or residual, so the named flows reconcile to EIA's
+          published Hormuz total.
+        </li>
+        <li>
+          <strong>Scarce capacity is shared evenly.</strong> When several flows
+          want the same bypass, each gets a share proportional to what it is
+          trying to move. Real allocation would be settled by contract and
+          price; this page does not speculate about whose oil moves first.
+        </li>
+      </ul>
+    </footer>
+
     <script type="module" src="./main.ts"></script>
   </body>
 </html>

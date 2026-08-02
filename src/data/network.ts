@@ -204,3 +204,98 @@ export const LEGS: readonly Leg[] = [
 
 /** Bypasses: any leg with a hard throughput ceiling. */
 export const BYPASSES = LEGS.filter((leg) => leg.capacityMbd !== undefined);
+
+/**
+ * Intermediate points, `[lon, lat]`, for legs whose great circle would cross
+ * land. Cartography only — none of this touches the allocation.
+ *
+ * A leg with no entry here is drawn through its chokepoints, which is usually
+ * enough: routing Ras Tanura to the Gulf of Oman through Hormuz bends the line
+ * into the strait on its own. Legs listed below either have no chokepoint to
+ * bend them (the Cape route, the Lombok alternative) or need more than one
+ * bend (out of the Black Sea, round South America).
+ *
+ * The pipelines are deliberately absent. A pipeline crossing Arabia is not a
+ * drawing error — it is the whole reason Petroline exists.
+ */
+export const LEG_SHAPES: Readonly<Record<string, readonly [number, number][]>> = {
+  // Around the Indonesian archipelago instead of through Malacca.
+  "sea-lombok": [
+    [97, -1],
+    [115.8, -8.42],
+    [117, -2],
+    [116, 6],
+  ],
+  // Down the Indian Ocean, east of Madagascar, round the Cape.
+  "sea-arabian-cape": [
+    [58, 2],
+    [50, -24],
+    [26, -34],
+  ],
+  "sea-cape-atlantic": [
+    [0, -15],
+    [-18, 10],
+  ],
+  "sea-westmed-atlantic": [[-5.75, 35.94]],
+  "sea-eastmed-westmed": [
+    [22, 34],
+    [12, 37],
+  ],
+  "sea-eastmed-augusta": [[24, 34]],
+  // Out of the Black Sea: Bosporus, Dardanelles, then the Aegean. Without
+  // these the line goes straight over Anatolia.
+  "sea-turkish-straits": [
+    [29.09, 41.17],
+    [26.3, 40.2],
+    [25, 36],
+  ],
+  "sea-primorsk-baltic": [
+    [24, 59.5],
+    [20, 58],
+  ],
+  "sea-danish-straits": [
+    [12.85, 55.51],
+    [10.5, 57.5],
+    [7, 57],
+  ],
+  "kiel": [
+    [11, 54.5],
+    [9.2, 54.3],
+  ],
+  "sea-atlantic-rotterdam": [
+    [-11, 44],
+    [-6, 49],
+  ],
+  "sea-houston-caribbean": [
+    [-85, 22],
+    [-84, 20],
+  ],
+  "sea-houston-atlantic": [
+    [-81, 25],
+    [-70, 32],
+  ],
+  "trans-panama": [
+    [-79.5, 9.3],
+    [-79.8, 8.9],
+  ],
+  // Round the east coast of South America to the Strait of Magellan.
+  "sea-caribbean-magellan": [
+    [-60, 10],
+    [-38, -10],
+    [-48, -32],
+    [-62, -48],
+  ],
+  "sea-scs-qingdao": [
+    [119, 22],
+    [122, 28],
+  ],
+  "sea-scs-yokohama": [
+    [122, 20],
+    [132, 31],
+  ],
+  "sea-kozmino-qingdao": [
+    [131, 40],
+    [129, 34.5],
+    [123, 34],
+  ],
+};

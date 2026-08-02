@@ -105,3 +105,52 @@ these entries at the end; it is not written directly.
   exits, so it is throttled to SUMED's 2.5 mb/d rather than severed.
 - **Citation:** this commit; the `no dead controls` and `the Petroline trap`
   blocks in `spec/assignment1.test.ts`.
+
+---
+
+- **Date/time:** 2026-08-02, late evening
+- **Tag:** `[harness]`
+- **What happened:** With 85 tests green I had no evidence the page looked
+  right, only that it was correct. The first real render was unstyled markup
+  with no interface at all — a module script will not load over `file://` — and
+  the second, served properly, showed shipping lanes cutting straight across
+  the Arabian Peninsula, Anatolia and South America.
+- **What I did instead of the obvious thing:** Rather than eyeball the dev
+  server and move on, I got a real headless Chromium working without root
+  (`apt-get download` + `dpkg-deb -x` for libnspr4, libnss3 and libasound2t64
+  into a local prefix) and screenshotted both marking viewports. Then, instead
+  of hand-waving the land crossings, I separated cartography from routing: legs
+  now bend through their chokepoints, with a `LEG_SHAPES` table for the ones
+  that need more. None of it touches the allocation, so the model stayed
+  provably unchanged while the map became legible.
+- **How I knew it was right:** Looked at 1920×1080 and 390×844 before and after,
+  and confirmed the line into the Gulf now threads Hormuz rather than crossing
+  Saudi Arabia. The wrong-port trap caught me once — a preview left running from
+  the Crit 1 repo meant my first two screenshots were of last week's site, which
+  I only noticed because the file size matched a Crit 1 screenshot byte for
+  byte. Both failure modes are now written into CLAUDE.md with the working
+  commands.
+- **Citation:** this commit; CLAUDE.md → "Verifying what you actually shipped",
+  and `LEG_SHAPES` in `src/data/network.ts`.
+
+---
+
+- **Date/time:** 2026-08-02, late evening
+- **Tag:** `[judgement]`
+- **What happened:** Screenshotting a *closed* chokepoint needs the browser
+  driven, not just loaded. The obvious answer was a Playwright dependency, or a
+  test-only hook to force state.
+- **What I did instead of the obvious thing:** Put the closed set in the URL
+  hash instead — `#closed=hormuz,bab-el-mandeb`. It is a real feature, not
+  scaffolding: someone who finds a state worth showing can send it, and the
+  crit demo can jump straight to a scenario rather than clicking to it live.
+  Verification falls out for free, because any state is now a URL a plain
+  `--screenshot` can open. No new dependency, and no product code that exists
+  only for the tests.
+- **How I knew it was right:** Screenshotted `#closed=hormuz` at both viewports
+  and read the result: 16.10 mb/d in red, Ras Tanura ringed with stranded
+  volume, the Gulf routes amber, Petroline showing as a dashed line, and both
+  control flows still teal and unmoved. Round-trip and unknown-id handling are
+  covered by four tests in `spec/interaction.test.ts`.
+- **Citation:** this commit; `src/ui/permalink.ts` and the "a state is
+  shareable" block in `spec/interaction.test.ts`.

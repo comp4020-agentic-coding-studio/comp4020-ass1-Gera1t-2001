@@ -64,6 +64,11 @@ export function mount(
   const figure = el("figure", { class: "stage" });
   const chart = svg("svg", {
     viewBox: `0 0 ${VIEW_WIDTH} ${VIEW_HEIGHT}`,
+    // `slice` only bites where CSS gives the box a height of its own — on a
+    // phone, where it crops the empty polar bands instead of letterboxing
+    // them. On desktop the height is auto, the box matches the viewBox aspect
+    // exactly, and slice behaves identically to meet.
+    preserveAspectRatio: "xMidYMid slice",
     class: "map",
     "data-testid": "map",
     role: "img",
@@ -126,11 +131,14 @@ export function mount(
   const controls = el("section", { class: "controls", id: "chokepoints" });
   controls.append(
     el("h2", {}, "Close one and see"),
+    // The list is sorted by volume, and that sorting is the argument: it is the
+    // ranking everyone reaches for, and it predicts almost nothing. Saying so
+    // sets up the subversion without giving away which strait is which.
     el(
       "p",
       { class: "controls__hint" },
-      "Every one of these carries more oil than the last one you would guess. " +
-        "Three of them have nowhere else to send it.",
+      "Ordered by how much oil they carry, largest first. " +
+        "That order tells you almost nothing about what happens when you close one.",
     ),
   );
 
@@ -224,6 +232,29 @@ export function mount(
   );
   root.append(flowSection);
 
+  // ── Linking the map to the table ────────────────────────────────────────
+  // Eleven flows overlap heavily around the Gulf, and a table of eleven rows
+  // is no easier to scan. Pointing at either one picks out the other.
+  //
+  // Pointer only, deliberately: every figure on the map is already a cell in
+  // the table, so nothing here is a channel a keyboard user would otherwise
+  // lack — and making eleven rows focusable would add eleven tab stops in
+  // front of the seven that actually do something.
+  function highlight(flowId: string | null): void {
+    chart.classList.toggle("map--linked", flowId !== null);
+    for (const line of flowLayer.querySelectorAll<SVGPathElement>("path.flow")) {
+      line.classList.toggle("flow--linked", line.getAttribute("data-flow") === flowId);
+    }
+    for (const [id, row] of rows) {
+      row.classList.toggle("row--linked", id === flowId);
+    }
+  }
+
+  for (const [flowId, row] of rows) {
+    row.addEventListener("pointerenter", () => highlight(flowId));
+    row.addEventListener("pointerleave", () => highlight(null));
+  }
+
   // ── Update ──────────────────────────────────────────────────────────────
   function update(allocation: Allocation): void {
     const closed = new Set(allocation.closed);
@@ -276,7 +307,15 @@ export function mount(
     strandLayer.textContent = "";
     const strandedByOrigin = new Map<string, number>();
 
-    for (const allocated of allocation.flows) {
+    // Flows share legs — Gulf-to-Europe and US-Gulf-to-Europe both use the
+    // Atlantic approach. Whichever is drawn last wins the pixels, so draw the
+    // detoured ones last: a route that changed is the thing worth seeing, and
+    // an unaffected flow painting over it hides exactly the wrong half.
+    const drawOrder = [...allocation.flows].sort(
+      (a, b) => Number(a.addedDays > 0) - Number(b.addedDays > 0),
+    );
+
+    for (const allocated of drawOrder) {
       const flow = FLOW_BY_ID.get(allocated.flowId)!;
       const detoured = allocated.addedDays > 0;
 
@@ -292,6 +331,8 @@ export function mount(
             "data-flow": allocated.flowId,
             "data-leg": legId,
           });
+          line.addEventListener("pointerenter", () => highlight(allocated.flowId));
+          line.addEventListener("pointerleave", () => highlight(null));
           flowLayer.append(line);
         }
       }

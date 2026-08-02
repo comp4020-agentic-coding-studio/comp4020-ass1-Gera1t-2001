@@ -208,6 +208,44 @@ describe("the control flows", () => {
   });
 });
 
+describe("the ordering carries the argument", () => {
+  // The switches are presented in this order, and the piece depends on it: a
+  // visitor reading top to bottom meets the largest chokepoint first and finds
+  // it harmless, then meets a much smaller one near the bottom and finds it
+  // fatal. If someone re-sorts this list for tidiness, that reveal is gone —
+  // so the ordering is a contract, not a preference.
+  it("lists chokepoints by volume, largest first", () => {
+    const volumes = CHOKEPOINTS.map((c) => c.oilFlowMbd);
+    expect(volumes).toEqual([...volumes].sort((a, b) => b - a));
+  });
+
+  it("does not let volume predict consequence", () => {
+    const largest = CHOKEPOINTS[0];
+    const strandedByLargest = allocate(all([largest.id])).strandedMbd;
+
+    const worst = CHOKEPOINTS.map((c) => ({
+      chokepoint: c,
+      stranded: allocate(all([c.id])).strandedMbd,
+    })).sort((a, b) => b.stranded - a.stranded)[0];
+
+    // The biggest chokepoint is not the most damaging one to close. If this
+    // ever becomes false the piece has no thesis left.
+    expect(worst.chokepoint.id).not.toBe(largest.id);
+    expect(strandedByLargest).toBeLessThan(worst.stranded);
+  });
+
+  it("has a chokepoint that strands more than one several times its size", () => {
+    const bySize = [...CHOKEPOINTS].sort((a, b) => b.oilFlowMbd - a.oilFlowMbd);
+    const big = bySize[0];
+    const small = bySize[bySize.length - 2];
+
+    expect(small.oilFlowMbd * 3).toBeLessThan(big.oilFlowMbd);
+    expect(allocate(all([small.id])).strandedMbd).toBeGreaterThan(
+      allocate(all([big.id])).strandedMbd,
+    );
+  });
+});
+
 describe("data integrity", () => {
   it("cites a source for every flow", () => {
     for (const flow of FLOWS) {

@@ -105,11 +105,48 @@ a {
 
 h1 {
   margin: 0 0 1.25rem;
-  font-size: clamp(2rem, 1.15rem + 3.4vw, 3.35rem);
+  font-size: clamp(1.8rem, 1.1rem + 3.4vw, 3.35rem);
   font-weight: 400;
   line-height: 1.06;
   letter-spacing: -0.02em;
   text-wrap: balance;
+}
+
+/* On a phone every line of prose is a line the map is pushed down by, and
+   the map is the thing the visitor came to touch. */
+@media (width <= 46rem) {
+  .masthead {
+    padding: 1rem 0 0.75rem;
+  }
+
+  .masthead__kicker {
+    margin: 1.1rem 0 0.4rem;
+  }
+
+  h1 {
+    margin-bottom: 0.9rem;
+  }
+
+  .standfirst {
+    margin-bottom: 0.7rem;
+    font-size: 0.95rem;
+    line-height: 1.45;
+  }
+}
+
+/* Side by side on a wide screen. Stacked, the two paragraphs push the map
+   entirely below the fold on a 1080p display, so the first thing a visitor
+   meets is prose rather than the thing they are meant to touch. */
+.masthead__body {
+  display: grid;
+  gap: 0 2.5rem;
+}
+
+@media (width >= 60rem) {
+  .masthead__body {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    max-width: 58rem;
+  }
 }
 
 .standfirst {
@@ -169,7 +206,32 @@ h1 {
   opacity: 0.82;
   transition:
     stroke 180ms ease,
-    stroke-width 180ms ease;
+    stroke-width 180ms ease,
+    opacity 140ms ease;
+}
+
+/* Oil that cannot leave, piling up where it was loaded. */
+.strand {
+  fill: color-mix(in srgb, var(--stopped) 22%, transparent);
+  stroke: var(--stopped);
+  stroke-width: 1.1;
+}
+
+/* Point at one flow, anywhere, and the other ten step back. */
+.map--linked .flow:not(.flow--linked) {
+  opacity: 0.1;
+}
+
+.map--linked .strand {
+  opacity: 0.25;
+}
+
+.flow--linked {
+  opacity: 1;
+}
+
+.row--linked {
+  background: #16233a;
 }
 
 .flow--detoured {
@@ -184,13 +246,6 @@ h1 {
 .flow--pipeline {
   stroke-dasharray: 1.6 2.6;
   opacity: 1;
-}
-
-/* Oil that cannot leave, piling up where it was loaded. */
-.strand {
-  fill: color-mix(in srgb, var(--stopped) 22%, transparent);
-  stroke: var(--stopped);
-  stroke-width: 1.1;
 }
 
 .mark {
@@ -575,7 +630,11 @@ h2 {
     margin-inline: calc(var(--gutter) * -1);
   }
 
+  /* A fixed height turns on the SVG's `slice` behaviour: the map fills the box
+     and the empty polar bands are cropped, rather than the continents being
+     shrunk to fit them in. */
   .map {
+    height: 15rem;
     border-inline: 0;
   }
 }

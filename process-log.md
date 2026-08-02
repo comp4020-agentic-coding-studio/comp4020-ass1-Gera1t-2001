@@ -206,3 +206,35 @@ these entries at the end; it is not written directly.
   already passed.
 - **Citation:** this commit; `spec/contrast.test.ts` red → green, and the
   palette change in `styles.css`.
+
+---
+
+- **Date/time:** 2026-08-03, early hours
+- **Tag:** `[judgement]`
+- **What happened:** The switch list was in the order I happened to write the
+  chokepoints in. A visitor could close Hormuz, see 16.10 stranded, decide the
+  page is about Hormuz, and leave — never finding that Malacca is larger and
+  harmless, which is the actual thesis.
+- **What I did instead of the obvious thing:** The obvious fixes are a caption
+  explaining the three classes, or grouping the switches by class. Both give
+  the answer away before the visitor has done anything, which kills the only
+  interaction the piece has. I sorted the list by volume descending instead and
+  said so in one line: "Ordered by how much oil they carry, largest first. That
+  order tells you almost nothing about what happens when you close one." The
+  ranking is the one everybody reaches for, it is now the first thing on
+  screen, and reading top to bottom walks the visitor from the biggest (which
+  strands nothing) to a much smaller one near the bottom (which strands
+  everything). The argument is in the ordering rather than in a paragraph.
+- **How I knew it was right:** Wrote the ordering down as a contract before
+  trusting it — three tests in `spec/assignment1.test.ts` now assert that the
+  list is sorted by volume, that the largest chokepoint is *not* the most
+  damaging to close, and that a chokepoint under a third the size strands more
+  than the largest one does. If a future tidy-up re-sorts the list or the data
+  shifts, the thesis fails loudly instead of quietly evaporating.
+- **Citation:** this commit; the `the ordering carries the argument` block in
+  `spec/assignment1.test.ts`, and the sort in `src/data/chokepoints.ts`.
+- **Also in this commit (routine):** map-to-table linking on hover, detoured
+  flows drawn last so a shared leg shows the change rather than hiding it, a
+  two-column standfirst and a cropped phone map so the map clears the fold at
+  both marking viewports. All four verified by screenshot at 1920×1080 and
+  390×844.

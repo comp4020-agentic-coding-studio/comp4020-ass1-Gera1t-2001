@@ -18,6 +18,18 @@ const NATURE =
 
 export const CHOKEPOINTS: readonly Chokepoint[] = [
   {
+    id: "malacca",
+    name: "Strait of Malacca",
+    lat: 1.516954817,
+    lon: 102.6651061,
+    oilFlowMbd: 23.2,
+    reroutability: "short",
+    note:
+      "The largest oil chokepoint on earth by volume — and the least consequential " +
+      "to close. Ships take the Lombok or Sunda Straits instead and lose a few days.",
+    source: `${EIA}; coordinates ${PORTWATCH}; class ${NATURE}`,
+  },
+  {
     id: "hormuz",
     name: "Strait of Hormuz",
     lat: 26.29685349,
@@ -30,16 +42,16 @@ export const CHOKEPOINTS: readonly Chokepoint[] = [
     source: `${EIA}; coordinates ${PORTWATCH}; class ${NATURE}`,
   },
   {
-    id: "malacca",
-    name: "Strait of Malacca",
-    lat: 1.516954817,
-    lon: 102.6651061,
-    oilFlowMbd: 23.2,
-    reroutability: "short",
+    id: "danish",
+    name: "Danish Straits",
+    lat: 55.50784043,
+    lon: 12.85079477,
+    oilFlowMbd: 4.9,
+    reroutability: "none",
     note:
-      "The largest oil chokepoint on earth by volume — and the least consequential " +
-      "to close. Ships take the Lombok or Sunda Straits instead and lose a few days.",
-    source: `${EIA}; coordinates ${PORTWATCH}; class ${NATURE}`,
+      "Nearly 60% busier than 2021 as Russian crude re-routed. The Kiel Canal is " +
+      "the only alternative and it moved 0.2 mb/d — a twenty-fifth of the need.",
+    source: `${EIA}; coordinates ${PORTWATCH} (Oresund Strait); class ${NATURE}`,
   },
   {
     id: "suez",
@@ -65,18 +77,6 @@ export const CHOKEPOINTS: readonly Chokepoint[] = [
       "Halved from 9.3 mb/d in 2023 after Houthi attacks began — the largest " +
       "live demonstration of chokepoint rerouting in the dataset.",
     source: `${EIA}; coordinates ${PORTWATCH}; class ${NATURE}`,
-  },
-  {
-    id: "danish",
-    name: "Danish Straits",
-    lat: 55.50784043,
-    lon: 12.85079477,
-    oilFlowMbd: 4.9,
-    reroutability: "none",
-    note:
-      "Nearly 60% busier than 2021 as Russian crude re-routed. The Kiel Canal is " +
-      "the only alternative and it moved 0.2 mb/d — a twenty-fifth of the need.",
-    source: `${EIA}; coordinates ${PORTWATCH} (Oresund Strait); class ${NATURE}`,
   },
   {
     id: "turkish",

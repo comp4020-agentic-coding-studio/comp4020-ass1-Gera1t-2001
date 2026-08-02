@@ -160,3 +160,126 @@ catching you out, a fact about the stack the agent keeps getting wrong --- write
 it down here. Growing this file is the work of harness engineering, and the gap
 between this boilerplate and your own version is part of what your prototype
 says about the developer you're becoming.
+
+---
+
+Everything below this line is carried forward from earlier deliverables in this
+course. Rules specific to a past prototype have been dropped; what remains is
+what held true regardless of what was being built.
+
+## Verifying what you actually shipped
+
+- **`pnpm check` does not prove the page looks right.** Typecheck, build, lint
+  and the spec suite all pass on a page with a dead black band filling most of
+  the viewport --- that exact bug shipped once and was caught only by looking at
+  a real render
+  ([`c8392bd`](https://github.com/comp4020-agentic-coding-studio/comp4020-crit1-Gera1t-2001/commit/c8392bdf8319d94e85433d576f15c5d19e99ecb7)).
+- **Look at the built page at both marking viewports** --- 1920×1080 and
+  390×844 --- not at whatever size the dev server window happens to be. A page
+  can look fine at its natural content height while leaving most of a desktop
+  viewport empty. The `agent-browser` CLI is the supported way to do this.
+- **If the sandbox has no root and no browser**, a Chromium/Playwright shell can
+  still be gotten without sudo: `apt-get download <pkg>` then
+  `dpkg-deb -x <pkg>.deb .` to unpack the `.deb`s (fonts, missing shared libs
+  such as `libnspr4`) into a local prefix, point the right env vars at it, and
+  run Playwright against that.
+- **Say plainly what wasn't checked.** If a change was only verified by
+  `pnpm check` and not by looking at a real render, say so instead of implying
+  full verification. That gap is what let the viewport bug above ship in the
+  first place.
+
+## Model choice for delegated work
+
+- **Coding and execution** --- writing code, running checks, git operations ---
+  default to whichever model the main session is already running. Don't spin up
+  a subagent with a model override just to make a small edit or run a command.
+- **Ideas, design discussion, and open-ended brainstorming**: when weighing a
+  non-trivial choice (a design direction, an ambiguous trade-off, "what should
+  this look like"), consult an Opus subagent to think it through or give a
+  second opinion before settling on an approach, instead of only reasoning it
+  out inline.
+- **Review and verification that calls for real judgement** --- code review, or
+  looking at a rendered page --- also goes to an Opus subagent, the way the
+  viewport-fill bug was actually caught: `pnpm check` alone didn't see it, a
+  dedicated Opus review pass did
+  ([`c8392bd`](https://github.com/comp4020-agentic-coding-studio/comp4020-crit1-Gera1t-2001/commit/c8392bdf8319d94e85433d576f15c5d19e99ecb7)).
+
+## Process Logging (for PROCESS.md / COMP4020)
+
+### Language rule
+
+Chat with the human may happen in any language, but every file committed to this
+repo --- code, comments, commit messages, this CLAUDE.md, `process-log.md`,
+`PROCESS.md`, `reflections/*.md` --- must be written in English.
+
+### Logging rule
+
+Append one entry to `process-log.md` (create it if it doesn't exist) immediately
+before every `git commit` --- one entry per commit, no exceptions, even for a
+trivial commit. Never judge whether a commit is "significant enough" to log; the
+commit itself is the trigger, not a guess about its importance. A session or
+context window is not an observable event the way a commit is, and a single
+session can span several commits (or a single piece of work can span several
+sessions via context-window compaction) --- anchoring to the commit avoids both
+a blurred multi-task entry and a task split across dangling half-entries.
+
+Backstop: if a session (or context window) ends with uncommitted work, or with a
+decision that never produced a commit at all --- a rule change still under
+discussion, a review pass, a rejected approach --- log it then anyway, in the
+same format, marked `(no commit)`.
+
+Tag each entry as one of:
+
+- `[routine]` --- re-prompted until it passed; nothing structural changed
+- `[harness]` --- a rule was added to CLAUDE.md, or a check/test was wired in,
+  because of a recurring mistake
+- `[discarded]` --- a plausible-looking output was rejected in favor of a
+  different approach
+- `[judgement]` --- a non-obvious scoping/design call was made
+
+### Log entry format
+
+Structure each entry around the four things a PROCESS.md moment needs, so it can
+be lifted almost directly later:
+
+- **Date/time:**
+- **Tag:**
+- **What happened:** the problem, or what the agent got wrong (1-2 sentences)
+- **What I did instead of the obvious thing:** the call made, and why it beat
+  the obvious one (1-2 sentences)
+- **How I knew it was right:** the check run, the viewport looked at, what was
+  read before accepting the diff
+- **Citation:** the exact commit hash or range (run `git log -1 --format=%h`
+  after committing), OR the CLAUDE.md diff, OR the check name that went
+  red → green
+- **Curated prompt (if relevant):** the human's prompt that produced this
+  commit, trimmed to the essential ask --- not a full transcript
+
+Don't inflate routine work into a bigger-sounding tag. If nothing this session
+qualifies as harness/discarded/judgement, `[routine]` is the honest answer.
+
+### PROCESS.md rule
+
+Never write directly to PROCESS.md during normal work. Only touch it when
+explicitly asked to "update PROCESS.md" or "draft PROCESS.md from the log". When
+asked:
+
+1. Pull entries tagged `[harness]`, `[discarded]`, `[judgement]` from
+   process-log.md --- prioritize `[harness]` first.
+2. Choose the number of moments to match the deliverable:
+   - **Assignment (A1/A2/A3):** 3-4 moments, 400-600 words total (check the
+     specific brief for its exact word/moment count).
+   - **Weekly crit prototype:** fewer moments is fine --- 1-2 is enough if
+     that's genuinely what the week produced. Don't pad a quiet week to hit an
+     assignment-sized count.
+3. Write each moment following the repo's PROCESS.md template exactly: what
+   happened → what I did instead of the obvious thing → how I knew it was
+   right → citation (commit hash/range as a clickable link pointing at the
+   repo's commit or compare URL, or a CLAUDE.md change, or a check that went
+   red → green).
+4. Verify every citation resolves before finishing --- run
+   `pnpm check:evidence` and fix any broken links.
+
+For Assignment 1 specifically the brief fixes these numbers: **400--600 words,
+three or four moments, not more.** The strongest moments are the ones where a
+correction landed in this harness rather than in another prompt.

@@ -1,6 +1,7 @@
 // @vitest-environment jsdom
 import { beforeAll, beforeEach, describe, expect, it, vi } from "vitest";
-import { CHOKEPOINTS } from "../src/data/chokepoints";
+import { CHOKEPOINTS, CHOKEPOINT_BY_ID } from "../src/data/chokepoints";
+import { PRESETS } from "../src/data/presets";
 import { FLOWS } from "../src/data/flows";
 import { BYPASSES } from "../src/data/network";
 import { allocate } from "../src/model/allocate";
@@ -120,8 +121,15 @@ describe("the controls are operable", () => {
     // Every stop named, in order, rather than counted. A count passes when the
     // right number of wrong things is present — a mark quietly replacing a
     // switch would keep the total intact.
-    expect(tabStops(page.root).map((el) => el.dataset.chokepoint ?? el.dataset.control))
-      .toEqual(["reopen-all", ...CHOKEPOINTS.map((c) => c.id)]);
+    expect(
+      tabStops(page.root).map(
+        (el) => el.dataset.chokepoint ?? el.dataset.control ?? el.dataset.preset,
+      ),
+    ).toEqual([
+      ...PRESETS.map((p) => p.closed.join(",")),
+      "reopen-all",
+      ...CHOKEPOINTS.map((c) => c.id),
+    ]);
 
     // The marks stay pointer affordances: hidden from assistive technology and
     // absent from the tab order however the map is rebuilt.
@@ -481,6 +489,88 @@ describe("a section fragment still reaches its section", () => {
   it("does not scroll when the fragment carries state instead", () => {
     open("#closed=hormuz");
     expect(scrolled).not.toHaveBeenCalled();
+  });
+});
+
+describe("the preset scenarios", () => {
+  const links = (page: ReturnType<typeof open>) =>
+    [...page.root.querySelectorAll<HTMLAnchorElement>("[data-preset]")];
+  const current = (page: ReturnType<typeof open>) =>
+    links(page).filter((a) => a.getAttribute("aria-current") === "true");
+
+  it("gives every preset an href that is a real state", () => {
+    const page = open();
+    expect(links(page)).toHaveLength(PRESETS.length);
+
+    for (const link of links(page)) {
+      const parsed = readHash(link.getAttribute("href")!);
+      expect(parsed.size, `${link.getAttribute("href")} names no chokepoint`)
+        .toBeGreaterThan(0);
+      for (const id of parsed) {
+        expect(CHOKEPOINTS.some((c) => c.id === id), `${id} is not a chokepoint`).toBe(true);
+      }
+    }
+  });
+
+  it("round-trips each href to exactly the set the preset declares", () => {
+    for (const preset of PRESETS) {
+      expect(readHash(writeHash(new Set(preset.closed)))).toEqual(new Set(preset.closed));
+    }
+  });
+
+  it("cites every preset, and builds its figures from the data", () => {
+    for (const preset of PRESETS) {
+      expect(preset.source, `${preset.label} has no source`).not.toBe("");
+      if (preset.closed.length !== 1) continue;
+      // Both sides derive from CHOKEPOINTS, so a figure typed into the copy
+      // fails here the moment the data moves — which is the point.
+      const chokepoint = CHOKEPOINT_BY_ID.get(preset.closed[0])!;
+      expect(preset.note).toContain(chokepoint.oilFlowMbd.toFixed(1));
+    }
+  });
+
+  it("marks nothing current before the visitor goes anywhere", () => {
+    expect(current(open())).toHaveLength(0);
+  });
+
+  it("marks the preset whose state the visitor is actually in", () => {
+    const page = open();
+    page.switchFor("malacca")!.click();
+
+    // Driven by the allocation, not by which link was clicked — reaching the
+    // state with the switches must mark the preset just the same.
+    expect(current(page)).toHaveLength(1);
+    expect(readHash(current(page)[0].getAttribute("href")!)).toEqual(
+      new Set<ChokepointId>(["malacca"]),
+    );
+  });
+
+  it("matches on the set, not the spelling of the URL", () => {
+    const multi = PRESETS.find((p) => p.closed.length > 1)!;
+
+    // A shared link can list ids in any order, and start() does not rewrite the
+    // URL on first load — so the address really can differ from the canonical
+    // form while naming the same state. A string comparison fails here.
+    const canonical = writeHash(new Set(multi.closed));
+    // Reverse the *canonical* order, not the declaration order — the preset
+    // happens to be declared in reading order, which is already non-canonical,
+    // so reversing that handed back the canonical string and the test proved
+    // nothing. Reversing canonical differs for any two distinct ids.
+    const shared = `#closed=${[...readHash(canonical)].reverse().join(",")}`;
+    expect(shared).not.toBe(canonical);
+
+    const page = open(shared);
+    expect(current(page)).toHaveLength(1);
+    expect(readHash(current(page)[0].getAttribute("href")!)).toEqual(new Set(multi.closed));
+  });
+
+  it("puts them above the map, where they are the first thing offered", () => {
+    const page = open();
+    const row = page.root.querySelector('[data-testid="presets"]')!;
+    const figure = page.root.querySelector("figure.stage")!;
+    expect(
+      row.compareDocumentPosition(figure) & Node.DOCUMENT_POSITION_FOLLOWING,
+    ).toBeTruthy();
   });
 });
 

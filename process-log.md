@@ -796,3 +796,52 @@ user sees, which is the parity being aimed at.
 Residual risk, stated: a screen reader configured to spell all-caps strings as
 initialisms would read the visual labels letter by letter. That configuration is
 uncommon and the announced sentence is unaffected.
+
+---
+
+- **Date/time:** 2026-08-16, night
+- **Tag:** `[judgement]`
+- **What happened:** The page needed a way in that was not "click one of seven
+  switches and work it out". Three preset links, which is mostly a copy problem:
+  every claim has to be geography or published history, traceable to a citation
+  already in the repo, with no attribution of intent to anyone.
+- **What I did instead of the obvious thing:** Listed the candidates with the
+  citation each would rest on *before* writing any prose, and checked each
+  against the model first — which killed the most attractive one. Bab el-Mandeb
+  alone is the real 2024 rerouting event and the obvious preset, but the model
+  moves it by **+0.5 days**, because Gulf-to-Europe crude shifts onto Petroline
+  and discharges at Yanbu, north of the strait. A link sold as "the one that
+  actually happened" landing on half a day would read as broken and would
+  contradict its own note. The honest representation of that event is the pair —
+  Suez *and* Bab el-Mandeb — which gives +15.0 days, landing exactly on the EIA
+  Cape-versus-Suez anchor the graph was calibrated to. I also cut the two pieces
+  of colour the repo already contains (Houthi attacks, Russian crude
+  re-routing): both are cited, but naming an actor is attribution rather than
+  geography, and the volume changes are citable without them.
+- **How I knew it was right:** The copy carries no typed figures at all — the
+  standing rule says every number on screen is computed from `src/data/`, and
+  `23.2`, `3.7` and `15` are exactly such numbers. `src/data/presets.ts` derives
+  them from `CHOKEPOINT_BY_ID` and from `allocate()` at module load, so changing
+  a volume moves the prose, and a test asserts each single-chokepoint note
+  contains its chokepoint's figure — both sides derived, so a hardcoded note
+  fails the moment the data moves. Then I applied the false-green rule from the
+  previous commit to my own new test and it paid immediately: my first probe
+  swapped `setsEqual` for `href === writeHash(here)` and the suite stayed green,
+  which looked like a weak test. It was a bad probe — that comparison is
+  canonical-against-canonical and genuinely equivalent. The two ways an author
+  actually gets this wrong, `href === location.hash` and joined id lists, both
+  turn the test red. Investigating rather than concluding was the whole
+  difference.
+- **Citation:** this commit; `src/data/presets.ts`, `setsEqual` in
+  `src/render/view.ts`, and the `the preset scenarios` block in
+  `spec/interaction.test.ts`.
+- **Clicking the preset you are already on:** left unhandled, deliberately. The
+  fragment does not change, so no hashchange fires and nothing re-renders —
+  which is correct, because the page already shows that state. `aria-current`
+  is what makes the inaction legible rather than dead; without it the click
+  would look like a broken link.
+- **New contrast pairing:** `moving` on `panel`, for the current preset's label,
+  which draws over the panel fill rather than the page ground.
+- **Curated prompt:** "before you write the copy, list the candidate scenarios
+  with the citation each one would rest on, and show me that list. I want to
+  approve the claims before they are prose."

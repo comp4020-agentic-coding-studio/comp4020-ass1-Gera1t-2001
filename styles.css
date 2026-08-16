@@ -442,6 +442,71 @@ h1 {
   }
 }
 
+/* ── Try these ────────────────────────────────────────────────────────── */
+
+/* Above the map because they are an offer, not a summary. Kept light so they
+   do not compete with the standfirst they sit under. Sentence case rather than
+   text-transform: the uppercase labels elsewhere already reach the
+   accessibility tree as capitals, and there is no reason to add another. */
+.presets {
+  max-width: 78rem;
+  margin: 0 auto 1.3rem;
+}
+
+.presets__title {
+  margin: 0 0 0.5rem;
+  font-family: var(--mono);
+  font-size: 0.75rem;
+  font-weight: 400;
+  letter-spacing: 0.06em;
+  color: var(--ink-faint);
+}
+
+.presets__list {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(15rem, 1fr));
+  gap: 0.6rem;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.preset {
+  display: block;
+  height: 100%;
+  padding: 0.6rem 0.8rem;
+  border: 1px solid var(--edge);
+  border-radius: 3px;
+  color: inherit;
+  text-decoration: none;
+}
+
+.preset:hover {
+  border-color: var(--moving);
+}
+
+.preset__label {
+  display: block;
+  color: var(--moving);
+  font-size: 0.95rem;
+}
+
+.preset__note {
+  display: block;
+  margin-top: 0.15rem;
+  font-size: 0.8rem;
+  color: var(--ink-dim);
+}
+
+/* The state you are already in. Marked rather than disabled: clicking it
+   changes no fragment, so no hashchange fires and none is needed — the page
+   already shows this. aria-current is what makes that inaction legible
+   instead of looking like a dead link. */
+.preset--current {
+  border-color: var(--moving);
+  background: var(--panel);
+}
+
 /* ── Switches ─────────────────────────────────────────────────────────── */
 
 .controls,

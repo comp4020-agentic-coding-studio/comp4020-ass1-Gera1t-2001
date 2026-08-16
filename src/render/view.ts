@@ -1,7 +1,9 @@
 import { CHOKEPOINTS, CHOKEPOINT_BY_ID } from "../data/chokepoints";
 import { FLOWS, TOTAL_MBD } from "../data/flows";
 import { BYPASSES, LEGS } from "../data/network";
+import { PRESETS } from "../data/presets";
 import type { Allocation, ChokepointId } from "../model/types";
+import { writeHash } from "../ui/permalink";
 import {
   LAND_PATH,
   SPHERE_PATH,
@@ -39,6 +41,13 @@ function el<K extends keyof HTMLElementTagNameMap>(
 }
 
 const mbd = (value: number) => value.toFixed(2);
+
+/** Order-insensitive, which is the whole reason aria-current does not compare strings. */
+function setsEqual<T>(a: ReadonlySet<T>, b: ReadonlySet<T>): boolean {
+  if (a.size !== b.size) return false;
+  for (const value of a) if (!b.has(value)) return false;
+  return true;
+}
 /** Volume drives stroke weight; the square root keeps big flows from swamping the map. */
 const strokeFor = (volume: number) => 0.7 + 1.9 * Math.sqrt(volume);
 
@@ -86,6 +95,37 @@ export function mount(
   onIntent: (intent: Intent) => void,
 ): View {
   root.textContent = "";
+
+  // ── Try these ───────────────────────────────────────────────────────────
+  // Plain links whose href is a permalink state, so the existing hashchange
+  // path handles them and there is no second way for the closed set to change.
+  // Above the figure because they are an offer, not a summary: the switch list
+  // sorted by volume poses the question and these answer it in one click.
+  const presetRow = el("nav", {
+    class: "presets",
+    "data-testid": "presets",
+    "aria-label": "Example scenarios",
+  });
+  presetRow.append(el("h2", { class: "presets__title" }, "Try these"));
+
+  const presetList = el("ul", { class: "presets__list" });
+  const presetLinks = PRESETS.map((preset) => {
+    const link = el("a", {
+      class: "preset",
+      "data-preset": preset.closed.join(","),
+      href: writeHash(new Set(preset.closed)),
+    });
+    link.append(
+      el("span", { class: "preset__label" }, preset.label),
+      el("span", { class: "preset__note" }, preset.note),
+    );
+    const item = el("li");
+    item.append(link);
+    presetList.append(item);
+    return { preset, link };
+  });
+  presetRow.append(presetList);
+  root.append(presetRow);
 
   // ── Map ─────────────────────────────────────────────────────────────────
   const figure = el("figure", { class: "stage" });
@@ -418,6 +458,19 @@ export function mount(
     readout.classList.toggle("readout--verdict", Boolean(only));
 
     spoken.textContent = spokenSummary(allocation, rerouted.length, worstDetour);
+
+    // Set comparison, never a string one. A shared link can list ids in any
+    // order and start() does not rewrite the URL on first load, so the address
+    // legitimately differs from the canonical spelling of the same state — and
+    // a baseline preset would compare "" against a bare path. Both cases look
+    // correct right up until they are wrong.
+    const here = new Set<ChokepointId>(allocation.closed);
+    for (const { preset, link } of presetLinks) {
+      const isCurrent = setsEqual(new Set(preset.closed), here);
+      if (isCurrent) link.setAttribute("aria-current", "true");
+      else link.removeAttribute("aria-current");
+      link.classList.toggle("preset--current", isCurrent);
+    }
 
     // Both figures come from the data and the result — never a literal, so
     // changing a capacity in src/data/ moves the page with it.

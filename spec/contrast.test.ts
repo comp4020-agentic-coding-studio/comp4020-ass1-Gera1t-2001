@@ -73,6 +73,9 @@ const PAIRINGS: readonly Pairing[] = [
   { what: "small labels on a panel", fg: "ink-faint", bg: "panel", min: AA_TEXT },
   { what: "the kicker", fg: "detour", bg: "deep", min: AA_TEXT },
   { what: "links", fg: "moving", bg: "deep", min: AA_TEXT },
+  // The preset you are already on draws its label over the panel fill rather
+  // than the page ground, which is a pairing nothing else on the page makes.
+  { what: "the current preset's label", fg: "moving", bg: "panel", min: AA_TEXT },
   { what: "the stranded readout", fg: "stopped", bg: "panel", min: AA_TEXT },
   // Flow lines are non-text graphics that carry meaning, so 3:1 applies.
   { what: "a moving flow on water", fg: "moving", bg: "water", min: AA_LARGE },

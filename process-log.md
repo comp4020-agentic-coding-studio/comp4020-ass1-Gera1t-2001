@@ -718,3 +718,81 @@ these entries at the end; it is not written directly.
   nothing to trigger the check. The provenance rule asks you to show the sensor
   reports a known-good case; a false green requires showing the sensor RESPONDS
   TO A DELIBERATE CHANGE."
+
+---
+
+## Ledger: pre-existing assertions changed this session
+
+Two assertions that existed before a change were rewritten rather than left
+alone. Both are recorded here so the claim "nothing was weakened" can be
+checked rather than taken on trust. Neither was deleted; both replacements are
+argued to be strictly stronger, and a reader is entitled to disagree.
+
+**1. `location.hash === "#flows"`** — added in
+[`bbfaf4c`](https://github.com/comp4020-agentic-coding-studio/comp4020-ass1-Gera1t-2001/commit/bbfaf4c2be3b01400dd852430af876fec1407099),
+removed in
+[`9560df6`](https://github.com/comp4020-agentic-coding-studio/comp4020-ass1-Gera1t-2001/commit/9560df6dc66c12e3309a3453876b5ab30609a998).
+
+- *What it asserted:* that after a section nav the URL still reads `#flows`.
+- *Why it went:* `9560df6` deliberately restores the state URL after the scroll,
+  so the assertion contradicted the feature it preceded. It was written when the
+  decision to rewrite that hash had **already been made** — obsolete before it
+  was committed.
+- *Why the replacement is stronger:* the line's real purpose was proving the nav
+  was not vacuous, and the `navigate()` helper already guarantees that
+  structurally by resolving only once `hashchange` has fired — a nav that never
+  happened hangs the test rather than passing it. The coverage moved to
+  `returns the URL to the state after a section nav`, which asserts the parsed
+  set rather than the string, and to `leaves a section fragment alone when there
+  is no state to lose`, which pins the case the fix must not disturb. Two
+  assertions where there was one, neither depending on a spelling.
+
+**2. `readout` carries `aria-live="polite"`** — original starter-era assertion,
+rewritten in
+[`a7a6fe5`](https://github.com/comp4020-agentic-coding-studio/comp4020-ass1-Gera1t-2001/commit/a7a6fe5).
+
+- *What it asserted:* that one specific element carries one specific attribute.
+- *Why it went:* the live region moved to a purpose-written spoken sentence. The
+  contract — changes are announced — still holds; the mechanism changed.
+- *Why the replacement is stronger:* the old test named how the page was built,
+  not what it does, which is the failure `CLAUDE.md` → "Assert what a value
+  means" describes. It also could not have caught the trap that nearly made the
+  whole change a no-op: `<output>` carries an implicit `role="status"` and
+  therefore an implicit live region, so dropping the attribute alone would have
+  left the page announcing exactly as before while the test went green. The
+  replacement counts `[aria-live]`, `output` and `role="status"` together and
+  requires **exactly one** — it fails on the implicit region the old one was
+  blind to, and additionally fails if a second region is ever added, which the
+  old one permitted without complaint.
+
+**Also stated, not changed:** the tab-order assertion
+`expect(focusable.length).toBe(CHOKEPOINTS.length)` was rewritten in
+[`08b2e7c`](https://github.com/comp4020-agentic-coding-studio/comp4020-ass1-Gera1t-2001/commit/08b2e7c)
+from a count to a named list of every tab stop, derived from `CHOKEPOINTS`. This
+is listed for completeness though it is unambiguously a strengthening: bumping
+the count to `CHOKEPOINTS.length + 1` was explicitly rejected because a changed
+number is indistinguishable from a weakened assertion.
+
+---
+
+## Stated and not fixed: `MB/D STRANDED` in the accessibility tree
+
+Diagnosed rather than assumed, because two causes with different fixes were
+possible. It is **not** a missing space between adjacent inline nodes: the DOM
+holds `"mb/d stranded"`, space included. The computed `text-transform` is
+`uppercase`, and Chrome reflects that into the accessible name, so the AX tree
+reports `"MB/D STRANDED"`.
+
+Left as is, deliberately. The page already uses the recommended technique —
+semantic text in the DOM, presentation in CSS — and every available "fix" is
+worse: typing the capitals into the DOM turns a Chrome serialisation choice into
+a real defect in every engine, and `<abbr title>` is not reliably announced. The
+meaning is carried in expanded sentence case by the spoken summary
+(`"16.10 of 34.50 million barrels a day stranded"`), and the eight uppercase
+labels are now outside the live region, so none is re-announced on a toggle.
+A screen-reader user reading in browse mode gets exactly the string a sighted
+user sees, which is the parity being aimed at.
+
+Residual risk, stated: a screen reader configured to spell all-caps strings as
+initialisms would read the visual labels letter by letter. That configuration is
+uncommon and the announced sentence is unaffected.

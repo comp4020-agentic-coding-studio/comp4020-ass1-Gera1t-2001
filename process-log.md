@@ -1023,3 +1023,39 @@ uncommon and the announced sentence is unaffected.
 - **Curated prompt:** "if it already deduplicates, explain why one element
   produced a count of 2, because I do not understand that result and I will be
   asked about it on stage."
+
+---
+
+- **Date/time:** 2026-08-17, morning
+- **Tag:** `[harness]`
+- **What happened:** A sensor added because of a specific incident. While writing
+  the previous entry I fabricated a commit SHA — a plausible 40-character string
+  resolving to nothing — inside a markdown link whose visible text was the real
+  short hash. I caught it by re-reading. **Nothing in the roster could have.**
+  `check:evidence` read `PROCESS.md` and never `process-log.md`, which carries
+  most of the process evidence in this repo; and even for `PROCESS.md` it
+  extracted only the text between `[` and `](`, so a link's target was never
+  checked at all. A wrong target renders as an ordinary working link.
+- **What I did instead of the obvious thing:** The obvious fix is to make the
+  script read `process-log.md` too. That would still have missed the fault I
+  actually made, because the link text was correct. So the check now validates
+  three things in both files: every cited hash resolves, every URL target
+  resolves, and the link text and its target agree. The agreement check is the
+  one that catches the real failure — a citation pointing at a real but wrong
+  commit, which is indistinguishable from a correct one by eye.
+- **How I knew it was right:** Not by it passing. I injected each fault and
+  confirmed the check responds — a fabricated bare hash (`✗ cites deadbee`), my
+  actual mistake with a real text and a fabricated target (`✗ cites 08b2e7c0…`),
+  and a link pointing at a real but different commit (`✗ [`443e519`] links to
+  c6234629c49b, a different commit`). All three red, then green again on revert.
+  Every existing citation was checked before the change and none was broken:
+  8 in `process-log.md`, 14 in `PROCESS.md`.
+- **One judgement in the extraction:** bare backticked hashes count as citations
+  only at 7–10 characters or exactly 40, the lengths git actually produces. A
+  process log legitimately quotes other hex — md5 prefixes of screenshots, in
+  this one — and a check that failed on those would be switched off within a
+  week.
+- **Citation:** this commit; `citationsIn` and `linkPairs` in
+  `scripts/check-evidence.ts`, and `check:evidence` gaining a third line.
+- **Curated prompt:** "close the sensor gap you found. If it turns up a hash
+  that does not resolve, tell me before fixing it."

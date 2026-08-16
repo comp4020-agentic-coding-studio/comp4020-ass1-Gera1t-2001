@@ -77,6 +77,47 @@ export function reflectionFor(deliverable: Deliverable): string {
   return `crit-${Number.parseInt(deliverable.slug, 10)}.md`;
 }
 
+function resolves(sha: string): boolean {
+  try {
+    execFileSync("git", ["cat-file", "-e", `${sha}^{commit}`], { stdio: "ignore" });
+    return true;
+  } catch {
+    return false;
+  }
+}
+
+/**
+ * Every commit hash a file cites: the text of a markdown link, the hash in that
+ * link's target URL, and bare backticked hashes used as citations in prose.
+ *
+ * Bare hashes are only taken at 7–10 characters or exactly 40, the lengths git
+ * abbreviations and full SHAs actually take. Lengths in between are skipped
+ * because a process log legitimately quotes other hex digests — md5 prefixes of
+ * screenshots, for one — and a check that fails on those would be turned off.
+ */
+export function citationsIn(src: string): Set<string> {
+  const shas = new Set<string>();
+  for (const m of src.matchAll(/\[`?([0-9a-f]{7,40}(?:\.\.\.[0-9a-f]{7,40})?)`?\]\(/g)) {
+    for (const sha of m[1].split("...")) shas.add(sha);
+  }
+  for (const m of src.matchAll(/\/(?:commit|compare)\/([0-9a-f.]{7,90})/g)) {
+    for (const sha of m[1].split("...")) if (/^[0-9a-f]{7,40}$/.test(sha)) shas.add(sha);
+  }
+  for (const m of src.matchAll(/`([0-9a-f]{7,10}|[0-9a-f]{40})`/g)) shas.add(m[1]);
+  return shas;
+}
+
+/** Markdown citations as [link text, hash in the target URL] pairs. */
+export function linkPairs(src: string): [string, string][] {
+  const pairs: [string, string][] = [];
+  for (const m of src.matchAll(
+    /\[`?([0-9a-f]{7,40})`?\]\(https?:\/\/[^)]*?\/(?:commit|compare)\/([0-9a-f]{7,40})/g,
+  )) {
+    pairs.push([m[1], m[2]]);
+  }
+  return pairs;
+}
+
 function todayIn(timezone: string): string {
   // en-CA renders as YYYY-MM-DD, matching the API's monday strings
   return new Intl.DateTimeFormat("en-CA", { timeZone: timezone }).format(new Date());
@@ -145,23 +186,43 @@ async function main(): Promise<void> {
     );
   }
 
-  const shas = new Set<string>();
-  for (const match of src.matchAll(/\[`?([0-9a-f]{7,40}(?:\.\.\.[0-9a-f]{7,40})?)`?\]\(/g)) {
-    for (const sha of match[1].split("...")) shas.add(sha);
-  }
+  const shas = citationsIn(src);
 
   if (shas.size === 0) {
     fail("no commit citations found — cite each moment as [`<sha>`](<commit or compare URL>)");
   }
 
   for (const sha of shas) {
-    try {
-      execFileSync("git", ["cat-file", "-e", `${sha}^{commit}`], {
-        stdio: "ignore",
-      });
-    } catch {
-      fail(`cited commit ${sha} doesn't exist in this repo`);
+    if (!resolves(sha)) fail(`cited commit ${sha} doesn't exist in this repo`);
+  }
+
+  // A link's *text* being a real hash says nothing about where it points, and a
+  // wrong target renders as a perfectly ordinary link. Check both agree.
+  for (const [text, target] of linkPairs(src)) {
+    if (!target.startsWith(text) && !text.startsWith(target)) {
+      fail(`PROCESS.md: [\`${text}\`] links to ${target.slice(0, 12)}, a different commit`);
     }
+  }
+
+  // process-log.md carries most of the process evidence and was never read
+  // here, so a fabricated hash in it was invisible to the whole roster. Same
+  // rules, applied to the same kinds of citation.
+  if (existsSync("process-log.md")) {
+    const log = readFileSync("process-log.md", "utf8");
+    const logShas = citationsIn(log);
+    for (const sha of logShas) {
+      if (!resolves(sha)) fail(`process-log.md cites ${sha}, which doesn't exist in this repo`);
+    }
+    for (const [text, target] of linkPairs(log)) {
+      if (!target.startsWith(text) && !text.startsWith(target)) {
+        fail(`process-log.md: [\`${text}\`] links to ${target.slice(0, 12)}, a different commit`);
+      }
+    }
+    if (!failed) {
+      console.log(`✓ process-log.md: ${logShas.size} cited commit(s) all resolve`);
+    }
+  } else {
+    skip("no process-log.md — nothing to check its citations against");
   }
 
   // Images are deliberately not checked. Whether one renders is visible the

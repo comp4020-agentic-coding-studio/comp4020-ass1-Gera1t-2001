@@ -1,10 +1,11 @@
 // @vitest-environment jsdom
-import { beforeEach, describe, expect, it } from "vitest";
+import { beforeAll, beforeEach, describe, expect, it, vi } from "vitest";
 import { CHOKEPOINTS } from "../src/data/chokepoints";
 import { FLOWS } from "../src/data/flows";
 import { allocate } from "../src/model/allocate";
 import type { ChokepointId } from "../src/model/types";
-import { mount } from "../src/render/view";
+import type { App } from "../src/ui/app";
+import { start } from "../src/ui/app";
 import { readHash, writeHash } from "../src/ui/permalink";
 
 // The model tests in assignment1.test.ts prove the allocation is right. These
@@ -15,21 +16,43 @@ import { readHash, writeHash } from "../src/ui/permalink";
 // They mount the real render into jsdom rather than parsing built markup,
 // because the interface is built by script — parsing dist/index.html would
 // only ever see the empty shell.
+//
+// They drive the real `start()` — the same function main.ts calls — rather than
+// a local copy of its wiring, so `location` and `history` are exercised here
+// exactly as they are on the page. An earlier version of this helper rebuilt
+// the toggle by hand and never touched the URL, which meant the hash path was
+// asserted against a copy of itself.
 
-function open() {
+// jsdom implements no layout and does not define Element.prototype.scrollIntoView
+// at all (verified on jsdom 29.1.1: typeof undefined, absent from the prototype).
+// Production is right to call it unguarded, so the browser it assumes is
+// supplied here rather than weakened there.
+const scrollTargets: Element[] = [];
+const scrolled = vi.fn(function (this: Element) {
+  scrollTargets.push(this);
+});
+
+beforeAll(() => {
+  Object.defineProperty(Element.prototype, "scrollIntoView", {
+    value: scrolled,
+    writable: true,
+    configurable: true,
+  });
+});
+
+/** Every app started by open(), so each test can detach the last one's listener. */
+const live: App[] = [];
+
+function open(hash = "") {
+  // Set the URL before start() reads it, the way a visitor arriving on a
+  // shared link does.
+  history.replaceState(null, "", hash || "/");
   const root = document.createElement("main");
   document.body.append(root);
-  const closed = new Set<ChokepointId>();
-  const view = mount(root, (id) => {
-    if (closed.has(id)) closed.delete(id);
-    else closed.add(id);
-    view.update(allocate(closed));
-  });
-  view.update(allocate(closed));
+  live.push(start(root));
 
   return {
     root,
-    closed,
     switchFor: (id: ChokepointId) =>
       root.querySelector<HTMLButtonElement>(`button[data-chokepoint="${id}"]`),
     readout: () => root.querySelector<HTMLElement>('[data-testid="readout"]')!,
@@ -40,7 +63,14 @@ function open() {
 }
 
 beforeEach(() => {
+  // All three are per-file state that clearing document.body cannot reach: the
+  // hashchange listener lives on window, the spy accumulates across tests, and
+  // the URL would otherwise carry one test's closed set into the next.
+  for (const app of live.splice(0)) app.destroy();
   document.body.textContent = "";
+  scrolled.mockClear();
+  scrollTargets.length = 0;
+  history.replaceState(null, "", "/");
 });
 
 describe("the controls are operable", () => {
@@ -192,6 +222,76 @@ describe("no chokepoint reads as a broken switch", () => {
     page.switchFor("malacca")!.click();
     page.switchFor("turkish")!.click();
     expect(page.root.querySelector('[data-testid="verdict-class"]')!.textContent).toBe("");
+  });
+});
+
+describe("the URL is the state", () => {
+  // The round-trip tests below prove the grammar. These prove the page is
+  // actually wired to it — that closing a strait reaches the address bar, and
+  // that an address reaches the page.
+
+  it("writes the closed set into the URL", () => {
+    const page = open();
+    page.switchFor("hormuz")!.click();
+    expect(readHash(location.hash)).toEqual(new Set<ChokepointId>(["hormuz"]));
+  });
+
+  it("returns to baseline when the last strait reopens", () => {
+    const page = open();
+    page.switchFor("hormuz")!.click();
+    page.switchFor("hormuz")!.click();
+
+    // The semantics, not the spelling: whether baseline is a bare path or an
+    // explicit empty hash is a separate decision, and this should survive it.
+    expect(readHash(location.hash)).toEqual(new Set());
+    for (const chokepoint of CHOKEPOINTS) {
+      expect(page.switchFor(chokepoint.id)!.getAttribute("aria-pressed")).toBe("false");
+    }
+  });
+
+  it("opens straight into a shared state", () => {
+    const page = open("#closed=hormuz");
+
+    expect(page.switchFor("hormuz")!.getAttribute("aria-pressed")).toBe("true");
+    expect(Number(page.strandedText())).toBeCloseTo(
+      allocate(new Set<ChokepointId>(["hormuz"])).strandedMbd,
+      2,
+    );
+  });
+
+  it("follows a hash change from outside the page", async () => {
+    const page = open();
+    location.hash = "#closed=turkish";
+
+    // hashchange is asynchronous in jsdom, and listener order is not
+    // guaranteed — waiting on the event can still observe a stale DOM, so wait
+    // on the DOM itself.
+    await vi.waitFor(() => {
+      expect(page.switchFor("turkish")!.getAttribute("aria-pressed")).toBe("true");
+    });
+    expect(Number(page.strandedText())).toBeCloseTo(
+      allocate(new Set<ChokepointId>(["turkish"])).strandedMbd,
+      2,
+    );
+  });
+});
+
+describe("a section fragment still reaches its section", () => {
+  // The browser resolves a fragment against the page as it was parsed, before
+  // the interface exists, so start() re-applies it after the first render.
+  // These are the only tests that reach that block.
+
+  it("scrolls to the section the fragment names", () => {
+    const page = open("#flows");
+
+    // The identity of the target, not the call count: a count alone passes
+    // when the block scrolls to the wrong node.
+    expect(scrollTargets).toEqual([page.root.querySelector("#flows")]);
+  });
+
+  it("does not scroll when the fragment carries state instead", () => {
+    open("#closed=hormuz");
+    expect(scrolled).not.toHaveBeenCalled();
   });
 });
 

@@ -267,3 +267,57 @@ these entries at the end; it is not written directly.
 - **Also in this commit (routine):** reroutability classes colour-coded in the
   switch list, and the map cropped to a 1000×380 frame so the empty polar bands
   stop padding it.
+
+---
+
+- **Date/time:** 2026-08-16, afternoon
+- **Tag:** `[harness]`
+- **What happened:** `spec/interaction.test.ts`'s `open()` helper re-implemented
+  `main.ts`'s toggle wiring — its own `closed` Set, its own `mount()` callback,
+  its own `view.update(allocate(closed))` — and never touched `location`. So the
+  three lines that actually carry the permalink (`readHash` on load,
+  `replaceState` on toggle, the `hashchange` listener) had never been executed by
+  a test, and twenty-odd interaction assertions were being made against a copy of
+  the logic rather than the logic. A test helper that duplicates the thing it
+  tests is a sensor measuring itself.
+- **What I did instead of the obvious thing:** The obvious fix is to have the
+  test set `location.hash` before calling its own helper — which would have left
+  the duplication in place and bought nothing. I extracted the wiring into
+  `start(root)` in `src/ui/app.ts` so `main.ts` and the tests drive the same
+  function, and generalised `mount()`'s callback from `onToggle(id)` to a tagged
+  `Intent`. That second part is not extensibility for its own sake: the next
+  control, "reopen all", is destructive and should be undoable with the back
+  button, so it needs `pushState` where a toggle needs `replaceState`. Each
+  intent therefore has to decide its own history mode, and that decision belongs
+  in one exhaustive switch rather than scattered across a growing parameter list.
+- **How I knew it was right:** Wrote the six new tests first and confirmed they
+  failed on the missing module rather than on an assertion quirk. Then two
+  adversarial checks instead of trusting green. Deleted the relocated
+  `scrollIntoView` block and confirmed the test guarding it went red naming the
+  exact element it expected — a call-count assertion would have passed, which is
+  why the assertion is on the target's identity. Temporarily added the future
+  `reopen-all` variant and confirmed the exhaustive switch really does fail
+  `tsc` with TS2366 rather than silently doing nothing, so the claim in the
+  comment is verified rather than asserted. Probed jsdom 29.1.1 directly rather
+  than trusting either my assumption or the reviewer's: `scrollIntoView` is
+  absent entirely, `hashchange` is asynchronous, and `replaceState` does not fire
+  it. That first fact settled an argument — the stub belongs in the test, not a
+  `typeof` guard in production, because guarding real browser behaviour to
+  satisfy a test environment is backwards. 111 → 117 tests green, and
+  `#closed=hormuz` screenshotted at 1920×1080 and 390×844 to prove the initial
+  `readHash` works in a real browser and not only in jsdom.
+- **Citation:** this commit; `src/ui/app.ts`, and the `the URL is the state`
+  block in `spec/interaction.test.ts`.
+- **Curated prompt:** "the `open()` helper re-implements main.ts's toggle wiring
+  and never touches `location` — extract that wiring into one exported function
+  that both main.ts and the tests use, because the next feature needs an
+  assertion about `location.hash`."
+- **Found but deliberately not fixed here:** reading the newly-exposed path
+  turned up a live bug — `index.html`'s nav and skip link target `#chokepoints`,
+  `#flows` and `#sources`, and `hashchange` feeds those to `readHash`, which
+  finds no `closed=` key and returns an empty Set, silently reopening every
+  strait. Close Hormuz, click "Flows", and the model resets. It is left alone in
+  this commit so that "no existing assertion changed" stays meaningful evidence
+  that the extraction was clean; it gets its own red-to-green commit next, which
+  is also the independent second reading confirming the bug is real rather than
+  read off the code path.

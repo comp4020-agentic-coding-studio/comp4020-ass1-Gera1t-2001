@@ -47,6 +47,18 @@ export interface View {
 }
 
 /**
+ * What the visitor just did, as reported by the view.
+ *
+ * A tagged intent rather than one callback per control, because what happens
+ * next is not the same for every control. A toggle is exploration and rewrites
+ * the current history entry; reopening everything is destructive and should be
+ * undoable with the back button. Each intent has to decide both its next state
+ * and how it touches history, and that decision belongs in one exhaustive
+ * switch rather than scattered across a growing parameter list.
+ */
+export type Intent = { readonly type: "toggle"; readonly id: ChokepointId };
+
+/**
  * Build the interface once, then update it in place.
  *
  * The map markers are pointer affordances only (`aria-hidden`); the real
@@ -56,7 +68,7 @@ export interface View {
  */
 export function mount(
   root: HTMLElement,
-  onToggle: (id: ChokepointId) => void,
+  onIntent: (intent: Intent) => void,
 ): View {
   root.textContent = "";
 
@@ -169,7 +181,9 @@ export function mount(
       el("span", { class: "switch__note" }, chokepoint.note),
       el("span", { class: "switch__state", "data-testid": `state-${chokepoint.id}` }, "open"),
     );
-    button.addEventListener("click", () => onToggle(chokepoint.id));
+    button.addEventListener("click", () =>
+      onIntent({ type: "toggle", id: chokepoint.id }),
+    );
     switches.set(chokepoint.id, button);
 
     const item = el("li");
@@ -184,7 +198,9 @@ export function mount(
       svg("circle", { r: 5.5, class: "mark__ring" }),
       svg("path", { d: "M-3.4 -3.4 L3.4 3.4 M3.4 -3.4 L-3.4 3.4", class: "mark__cross" }),
     );
-    mark.addEventListener("click", () => onToggle(chokepoint.id));
+    mark.addEventListener("click", () =>
+      onIntent({ type: "toggle", id: chokepoint.id }),
+    );
     marks.set(chokepoint.id, mark);
     markLayer.append(mark);
   }

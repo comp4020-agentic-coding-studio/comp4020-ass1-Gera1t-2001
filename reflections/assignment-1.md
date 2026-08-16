@@ -14,7 +14,7 @@ The breakthrough was not checking harder. It was one rule in CLAUDE.md.
 It wrote this test:
 
 ```js
-expect(location.hash).toBe("#flows")
+expect(location.hash, "the nav should still have moved the URL").toBe("#flows");
 ```
 
 Two commits later we changed the page on purpose, so that hash gets rewritten
@@ -57,8 +57,10 @@ cannot tell whether what I am handed is right. I have started describing it to
 myself as being a monkey holding a machine gun.
 
 Correcting an agent in the next message requires me to be right. Changing what
-its work runs against does not. Two more rules went into CLAUDE.md the same way
-this week, both about not trusting a sensor I had just built.
+its work runs against does not. Four more rules went into CLAUDE.md the same way
+this week. Three are about not trusting a sensor I had just built; the fourth is
+about measuring the property that is actually at risk rather than the one that
+is easy to measure.
 
 I do not think the machine-gun feeling goes away by learning more. It got
 quieter when the thing I had built could tell me I was wrong.

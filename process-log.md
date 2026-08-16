@@ -940,3 +940,86 @@ uncommon and the announced sentence is unaffected.
   `pnpm check:evidence` one failure → zero.
 - **Curated prompt:** "your job is to verify it and commit it, not to improve
   the prose. Do NOT quietly smooth a wrong claim into a vaguer true one."
+
+---
+
+- **Date/time:** 2026-08-17, early hours
+- **Tag:** `[judgement]` *(no commit)*
+- **What happened:** Recording the working arrangement itself, because the
+  reflection's opening rests on it and nothing else in this repo records it.
+  Assignment 1 ran across three AI sessions: **Fable 5** drafting the plan,
+  the **course Opus session** executing in the terminal, and a **second Opus
+  session** reading the results with me. The arrangement carried forward from
+  Crit 2. Its failure mode is that it produces more confident claims than I can
+  check, and two instances are worth naming.
+- **The plan's invented figures.** Fable's plan quoted Petroline at 5.00 mb/d.
+  `src/data/network.ts` has it at **3.2**, sourced to EIA with the 3.2/1.5 split
+  between Petroline and ADCOP marked `Derived`. The figure was not in any source
+  and not in the repo; it read as authoritative because it was formatted like
+  the real ones. This is the origin of the standing rule that no numeric figure
+  from a prompt is ever written into code, copy or a test — every number on
+  screen is computed from `src/data/` or from the `Allocation`.
+- **The reviewing session was wrong four times, all four about browser
+  behaviour.** Recorded with how each was settled, because "the reviewer was
+  wrong" is worth nothing without the method that showed it:
+  1. **Which code path the scroll block sits on.** Claimed the nav bug-fix test
+     would reach `scrollIntoView`. It does not — the block runs once inside
+     `start()` on first render, never in the `hashchange` handler, so the test
+     reaches it only via `open("#flows")`. Settled by reading the call site.
+  2. **`disabled` preserving focus.** Offered "keep the reopen-all button
+     rendered but disabled" as a fix for focus falling to `<body>`. Settled by
+     driving a real browser over CDP: setting `disabled` on a focused button
+     drops focus to `<body>` exactly as removing it does, so that option solves
+     nothing while appearing to.
+  3. **A missing space in the accessible name.** Offered `MB/DSTRANDED` as
+     possibly two adjacent inline nodes with no separator. Settled by reading
+     the DOM and the computed style together: the text is `"mb/d stranded"`,
+     space included, and Chrome reflects `text-transform: uppercase` into the
+     accessible name. Different cause, different fix.
+  4. **The live-region count double-counting.** Suspected the assertion ran
+     three queries and summed them, so an `<output aria-live="polite">` would be
+     one region reported as two. Settled by measurement: it is a single
+     `querySelectorAll` over a union selector, and an element matching all three
+     parts is returned **once** (`count = 1`). The count of 2 in the demo was
+     two distinct elements — the readout and the spoken summary.
+- **How I knew:** each of the four was settled by running something rather than
+  by argument — a call-site read, a CDP focus probe, a DOM-versus-AX-tree
+  comparison, and a selector fixture. Three of the four produced a result that
+  contradicted my own first guess as well.
+- **Citation:** no commit — this records an arrangement and four decisions that
+  produced no diff of their own. The reflection's opening paragraph cites it;
+  the CDP focus probe and the selector fixture are reproduced in the entries for
+  [`08b2e7c`](https://github.com/comp4020-agentic-coding-studio/comp4020-ass1-Gera1t-2001/commit/08b2e7ce365aec419f21bf5ac9d142b1807047b1)
+  and in this session's verification pass.
+
+---
+
+- **Date/time:** 2026-08-17, early hours
+- **Tag:** `[routine]`
+- **What happened:** Two amendments to the reflection after verification, plus
+  the arrangement entry above. The quoted assertion now carries the message
+  argument the committed line actually had, and the rule count is corrected from
+  two to four.
+- **What I did instead of the obvious thing:** A suspected defect in the
+  live-region assertion — that it summed three queries and would double-count a
+  single `<output aria-live="polite">` — turned out not to exist, and the
+  obvious move was to say so. I measured all four configurations instead,
+  because the question was going to be asked on stage and "it deduplicates"
+  is not an answer anyone can check. One element matching all three parts of the
+  union returns a count of 1; the 2 in the demo was the readout plus the spoken
+  summary, two distinct elements.
+- **How I knew it was right:** The measurement also produced a better stage
+  demo than the one I had. On the old page — readout live, no spoken summary —
+  both assertions are green, so the new one is not merely stricter. Adding a
+  live region to a second element then gives `old=GREEN new=RED`. Showing them
+  agree first is what makes the divergence mean something.
+- **Also caught in this entry:** I fabricated a commit SHA while writing the
+  arrangement entry above — a plausible-looking 40-character string that
+  resolves to nothing. Replaced with the real hash and every SHA in
+  `process-log.md` re-checked against `git log -1`. `pnpm check:evidence` does
+  not read this file, so nothing would have caught it.
+- **Citation:** this commit; `reflections/assignment-1.md` amendments, and the
+  `(no commit)` arrangement entry above.
+- **Curated prompt:** "if it already deduplicates, explain why one element
+  produced a count of 2, because I do not understand that result and I will be
+  asked about it on stage."

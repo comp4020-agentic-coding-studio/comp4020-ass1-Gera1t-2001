@@ -912,3 +912,31 @@ uncommon and the announced sentence is unaffected.
 - **Curated prompt:** "write each one from the log entries, not from this list —
   if the log does not support one of them, stop and tell me rather than writing
   a claim the history cannot back."
+
+---
+
+- **Date/time:** 2026-08-17, early hours
+- **Tag:** `[routine]`
+- **What happened:** Committed the reflection, written by me, not the agent. Its
+  job was verification: check every factual claim against the repo, the log,
+  `CLAUDE.md` and the history, and report anything wrong or unconfirmable rather
+  than quietly rewording it into something safer.
+- **What I did instead of the obvious thing:** Ran the crit demo rather than
+  predicting it. The claim was that adding a second live region leaves the old
+  assertion green and turns the new one red; asserting that from reasoning would
+  have been exactly the failure this reflection is about. Restoring
+  `aria-live="polite"` on the readout produced `expected [ …(2) ] to have a
+  length of 1 but got 2` with the old assertion passing — confirmed, and it
+  demonstrates both stated failure modes at once.
+- **How I knew it was right:** Petroline is 3.2 in `src/data/network.ts`; the
+  serialisation rule records exactly three instances; the blockquote matches the
+  `CLAUDE.md` heading verbatim; both assertion forms match the committed code.
+  Two claims did not survive and were reported rather than smoothed: the quoted
+  assertion omits a message argument the real line carried, and "two more rules"
+  undercounts — four bullets went into `CLAUDE.md` across three commits, three
+  of them about self-built sensors. Two further claims are outside anything I
+  can see: Fable's plan, and the reviewing session being wrong four times.
+- **Citation:** this commit; `reflections/assignment-1.md`, and
+  `pnpm check:evidence` one failure → zero.
+- **Curated prompt:** "your job is to verify it and commit it, not to improve
+  the prose. Do NOT quietly smooth a wrong claim into a vaguer true one."

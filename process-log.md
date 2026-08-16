@@ -407,3 +407,44 @@ these entries at the end; it is not written directly.
   before your code runs, so Back changes nothing. I still think the trade is
   right, but it must be documented in the code comment, not discovered by a
   marker pressing Back."
+
+---
+
+- **Date/time:** 2026-08-16, evening
+- **Tag:** `[harness]`
+- **What happened:** Three separate times in one session, a test asserted a
+  serialised form rather than the thing it meant: `location.hash === ""` for
+  "nothing is closed"; `location.hash === "#flows"`, which I wrote in `bbfaf4c`
+  and deleted in `9560df6`; and a proposed `aria-current` rule comparing
+  `writeHash` output against an href string. Each was individually defensible
+  and each was individually corrected. Seeing them as one pattern is the part
+  that took an outside eye.
+- **What I did instead of the obvious thing:** The obvious response is to fix the
+  third instance and move on — all three had already been caught, so nothing was
+  broken. I wrote the rule into `CLAUDE.md` instead, with all three cited by
+  commit where they exist. The distinction that makes it worth a rule rather
+  than three corrections: the middle one was **born temporary**. The decision to
+  rewrite that hash had already been made when the assertion was written, so it
+  was obsolete before it was committed — which means the failure is not
+  carelessness that more care would prevent, but a default reach for the
+  spelling over the meaning. A default is a harness problem, not a prompt
+  problem.
+- **How I knew it was right:** The strongest evidence is the third instance,
+  which nobody had written yet and which the rule catches by construction:
+  comparing `writeHash` output to an href would appear to work for every preset
+  link except baseline, because `writeHash` emits ids in a fixed order and the
+  canonical baseline is `""` while the href is `#closed=`. A test suite that is
+  green for every case but one, and looks right, is worse than one that is red.
+  Also checked the rule against the existing suite rather than only against the
+  new work: `spec/interaction.test.ts` already asserts the model's number via
+  `allocate(...)` and `toBeCloseTo` rather than the rendered two-decimal string,
+  which is the same rule applied correctly, so the rule describes what the good
+  tests here already do.
+- **Citation:** this commit; `CLAUDE.md` → "Assert what a value means, not how it
+  is spelled", citing
+  [`bbfaf4c`](https://github.com/comp4020-agentic-coding-studio/comp4020-ass1-Gera1t-2001/commit/bbfaf4c2be3b01400dd852430af876fec1407099)
+  and
+  [`9560df6`](https://github.com/comp4020-agentic-coding-studio/comp4020-ass1-Gera1t-2001/commit/9560df6dc66c12e3309a3453876b5ab30609a998).
+- **Curated prompt:** "three times in this session a test asserted a serialised
+  form rather than the thing it means — same shape every time. That belongs in
+  the harness, not in my review."

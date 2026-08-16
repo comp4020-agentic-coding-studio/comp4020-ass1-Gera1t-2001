@@ -226,6 +226,47 @@ what held true regardless of what was being built.
   full verification. That gap is what let the viewport bug above ship in the
   first place.
 
+## Assert what a value means, not how it is spelled
+
+A test that compares a URL string, a formatted figure, or a DOM text literal is
+asserting a **serialisation**, not a fact. It goes red when the spelling changes
+for a reason the test does not care about — and, worse, it goes green when the
+spelling happens to match while the meaning is wrong. Assert through whatever
+function gives the value its meaning:
+
+- `readHash(location.hash)` against a `Set`, never `location.hash` against a
+  string. `writeHash` emits ids in a fixed order, so a string comparison
+  *appears* to work — right up until the one case where the canonical form
+  differs.
+- The model's number — `allocate(...).strandedMbd` with `toBeCloseTo` — never
+  the two-decimal string the readout happens to render.
+- The identity of a DOM node, never a count of nodes. A count passes when the
+  right *number* of wrong things is present, which is exactly the failure a tab
+  order or a scroll target can have.
+
+Three assertions in one session were written the wrong way round, and the shape
+was identical every time: the serialised form is nearer to hand than the meaning,
+and it is usually correct at the moment it is written.
+
+- `location.hash === ""` for "nothing is closed" — caught before it was written,
+  only because whether baseline was a bare path or an explicit empty hash was
+  still undecided.
+- `location.hash === "#flows"`
+  ([`bbfaf4c`](https://github.com/comp4020-agentic-coding-studio/comp4020-ass1-Gera1t-2001/commit/bbfaf4c2be3b01400dd852430af876fec1407099)),
+  written when the decision to rewrite that very hash had *already been made*,
+  and deleted two commits later
+  ([`9560df6`](https://github.com/comp4020-agentic-coding-studio/comp4020-ass1-Gera1t-2001/commit/9560df6dc66c12e3309a3453876b5ab30609a998)).
+  It was born temporary.
+- Deciding a preset link's `aria-current` by comparing `writeHash` output to the
+  href string — which never matches the baseline preset, `#closed=` against a
+  canonical `""`. That one looks correct for every case but the single one that
+  differs, which is the worst failure shape available.
+
+The tell: if you are about to write a string, a number-as-text, or a count into
+an expectation, stop and ask what function turns that spelling back into the
+thing it means. Assert on that instead. If no such function exists, that is
+usually the bug — the meaning has nowhere to live.
+
 ## Model choice for delegated work
 
 - **Coding and execution** --- writing code, running checks, git operations ---

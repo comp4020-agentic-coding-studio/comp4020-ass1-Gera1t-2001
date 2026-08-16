@@ -883,3 +883,32 @@ uncommon and the announced sentence is unaffected.
   and the `KNOWN COST` comment in `src/ui/app.ts`.
 - **Curated prompt:** "a false green here is the expensive one, because this is
   the pass that says everything is fine."
+
+---
+
+- **Date/time:** 2026-08-17, early hours
+- **Tag:** `[routine]`
+- **What happened:** Drafted `PROCESS.md` from this log, following the procedure
+  in `CLAUDE.md`: pull the `[harness]`, `[discarded]` and `[judgement]` entries,
+  write each moment in the template's four-job shape, delete the boilerplate.
+  Assignment 1 fixes the numbers at 400–600 words and four moments.
+- **What I did instead of the obvious thing:** Nothing inventive — the four
+  moments were chosen for me, and the work was cutting. Before writing I checked
+  each against the log rather than against the brief describing it, so no
+  sentence would make a claim the history cannot back; all four were supported,
+  including the specific figures (0.74 device pixels, the sub-dash bypass, the
+  `<output>` implicit live region). Roughly four fifths of the log did not fit
+  and was dropped, including the nav bug as a moment of its own, which does more
+  work as the payoff line inside moment 1 than it would standing alone.
+- **How I knew it was right:** `pnpm check:evidence` went from six failures to
+  one — the four placeholder citations and the template comment are gone, and
+  the only remaining item is the reflection, which is deliberately not part of
+  this pass. Every one of the seven cited SHAs resolves to a real commit in this
+  repo, checked individually with `git log -1`, and every URL points at this
+  repository rather than the template's placeholder org. 591 words by `wc -w`,
+  of which seven tokens are citation URLs.
+- **Citation:** this commit; `PROCESS.md` replacing the template, and
+  `pnpm check:evidence` six failures → one.
+- **Curated prompt:** "write each one from the log entries, not from this list —
+  if the log does not support one of them, stop and tell me rather than writing
+  a claim the history cannot back."

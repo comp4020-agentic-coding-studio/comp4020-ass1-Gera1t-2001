@@ -239,6 +239,20 @@ what held true regardless of what was being built.
   believing an ad-hoc sensor's red, make it report a case you already know is
   good: had the script asserted "the button fires at all" first, it would have
   named its own fault instead of the code's.
+- **Cache-bust every CDP navigation.** `Page.navigate` to an
+  already-visited URL reuses the cached bundle, and `Network.setCacheDisabled`
+  did not stop it here. A measurement then describes the *previous* build and
+  reports "no change" after a change — the same harness fault as a false red,
+  pointing the other way, and harder to notice because "nothing moved" is what
+  a broken fix looks like. Append a unique query (`/?b=${process.hrtime.bigint()}`)
+  and confirm the loaded bundle name before believing any measurement of an
+  edit.
+- **Measure the property that is actually at risk.** The dormant bypass layer
+  was tuned against the *shortest* leg, then shipped with the *thinnest* one
+  rendering at 0.74 device pixels — a different object, invisible at the phone
+  viewport, and the fix for the first problem had made every dash sub-pixel
+  too. "Shortest" and "thinnest" are not the same failure, and looking at the
+  render will not tell them apart; only per-element numbers will.
 - **Say plainly what wasn't checked.** If a change was only verified by
   `pnpm check` and not by looking at a real render, say so instead of implying
   full verification. That gap is what let the viewport bug above ship in the

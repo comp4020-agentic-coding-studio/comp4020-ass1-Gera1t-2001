@@ -245,6 +245,18 @@ h1 {
   stroke-dasharray: 3 2.5;
 }
 
+/* At phone width the map renders at 0.476 device px per viewBox unit, which
+   puts every one of those dash segments under a single pixel — 0.71px for the
+   pipelines. A sub-pixel dash does not read as a dashed line, it reads as
+   nothing, so at this size the ways around go solid. Legibility beats the
+   pipeline-versus-canal distinction, which is not readable at 390px either
+   way, and the tooltip and the readout both still carry it. */
+@media (width <= 46rem) {
+  .bypass {
+    stroke-dasharray: none;
+  }
+}
+
 /* Oil that cannot leave, piling up where it was loaded. */
 .strand {
   fill: color-mix(in srgb, var(--stopped) 22%, transparent);

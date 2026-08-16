@@ -42,6 +42,19 @@ const mbd = (value: number) => value.toFixed(2);
 /** Volume drives stroke weight; the square root keeps big flows from swamping the map. */
 const strokeFor = (volume: number) => 0.7 + 1.9 * Math.sqrt(volume);
 
+/**
+ * A floor on the dormant bypass stroke, in viewBox units.
+ *
+ * Measured, not chosen: at 390px the map renders at 0.476 device px per unit,
+ * so the Kiel Canal's capacity-derived 1.55 came out at 0.74px — below one
+ * device pixel, drawn but not visible, which is the exact failure this layer
+ * exists to fix. 2.2 units clears one pixel there with a little headroom; 2.1
+ * lands on 0.9996 and the spec catches it. It binds on Kiel alone; every other
+ * bypass is already wider, so the capacity encoding is untouched except at the
+ * very bottom of the scale, where it would otherwise encode "invisible".
+ */
+const BYPASS_MIN_STROKE = 2.2;
+
 export interface View {
   update: (allocation: Allocation) => void;
 }
@@ -116,7 +129,10 @@ export function mount(
     const line = svg("path", {
       d: legPath(bypass.id),
       class: `bypass bypass--${bypass.kind}`,
-      "stroke-width": strokeFor(bypass.capacityMbd ?? 0).toFixed(2),
+      "stroke-width": Math.max(
+        strokeFor(bypass.capacityMbd ?? 0),
+        BYPASS_MIN_STROKE,
+      ).toFixed(2),
       "data-leg": bypass.id,
     });
     const label = document.createElementNS(SVG_NS, "title");

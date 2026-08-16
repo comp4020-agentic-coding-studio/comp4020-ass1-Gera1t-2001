@@ -599,3 +599,42 @@ these entries at the end; it is not written directly.
   nothing flows through them. 'Is there another way round, and how wide is it'
   is the physical reason the three classes behave differently. It is half the
   argument, currently unrendered."
+
+---
+
+- **Date/time:** 2026-08-16, night
+- **Tag:** `[harness]`
+- **What happened:** I had tuned the dormant bypass layer against the *shortest*
+  leg and declared it fixed. The object actually at risk was the *thinnest* one:
+  the Kiel Canal carries 0.2 mb/d, so on the shared flow scale it is the
+  narrowest stroke on the map, and at 390px it rendered at **0.74 device
+  pixels** — drawn and not visible, which is precisely the failure the layer
+  exists to fix. Worse, the dash periods I had shortened to fit SUMED were
+  **0.71px** at that width, so every pipeline dash was sub-pixel too. My fix for
+  the first problem had created the second.
+- **What I did instead of the obvious thing:** The obvious move after the last
+  round was to trust the render I had already looked at — it looked fine. Two
+  measurements instead: rendered stroke width and rendered dash length, per
+  bypass, in device pixels, at the smaller viewport. Then a floor on the dormant
+  stroke that binds on Kiel alone, and dropping the dash entirely below 46rem,
+  because a sub-pixel dash does not read as a dashed line, it reads as nothing —
+  and the pipeline-versus-canal distinction is not legible at 390px anyway,
+  while the tooltip and readout still carry it.
+- **How I knew it was right:** All five now clear one device pixel at 390px
+  (thinnest 1.05px, was 0.74px) and desktop keeps its dashes at 1.87px and above,
+  so the kind distinction survives where it can be seen. The floor is checked by
+  a test that states the contract — rendered width times the measured phone
+  scale must exceed one pixel — rather than restating the constant, and it
+  immediately earned itself: my first floor gave 0.9996px and the suite went red
+  on it. **The harness lied twice on the way here.** `Page.navigate` kept
+  serving a cached bundle even with `Network.setCacheDisabled`, so three
+  successive measurements described the previous build and reported "no change"
+  after a real change — a false green, which is harder to spot than a false red
+  because "nothing moved" is exactly what a broken fix looks like. Caught it by
+  asking the page which bundle it had loaded rather than assuming.
+- **Citation:** this commit; `BYPASS_MIN_STROKE` in `src/render/view.ts`, the
+  narrow-viewport rule in `styles.css`, and the two new bullets in `CLAUDE.md` →
+  "Verifying what you actually shipped".
+- **Curated prompt:** "you measured the SHORTEST bypass. The risk is the
+  THINNEST one at the SMALLEST viewport, which is a different object. Confirm by
+  measurement, not by looking."

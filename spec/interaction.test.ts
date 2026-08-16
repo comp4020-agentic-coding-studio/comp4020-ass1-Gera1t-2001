@@ -535,6 +535,28 @@ describe("the ways around are visible before they are needed", () => {
     ).toBeDefined();
   });
 
+  it("draws none of them too thin to survive the smaller viewport", () => {
+    // Measured on the built page at 390x844: the map renders at this many
+    // device pixels per viewBox unit. A stroke below one device pixel is drawn
+    // and not visible, which is the failure this whole layer exists to fix —
+    // and the thinnest way around is not the shortest one, so it needs its own
+    // check rather than being assumed covered.
+    const PHONE_PX_PER_UNIT = 0.476;
+    const page = open();
+
+    for (const bypass of BYPASSES) {
+      const width = Number(
+        page.root
+          .querySelector(`path.bypass[data-leg="${bypass.id}"]`)!
+          .getAttribute("stroke-width"),
+      );
+      expect(
+        width * PHONE_PX_PER_UNIT,
+        `${bypass.id} renders at ${(width * PHONE_PX_PER_UNIT).toFixed(2)}px on a phone`,
+      ).toBeGreaterThanOrEqual(1);
+    }
+  });
+
   it("names each way around with its own capacity and source", () => {
     const page = open();
     for (const bypass of BYPASSES) {

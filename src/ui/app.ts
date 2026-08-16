@@ -73,15 +73,18 @@ export function start(root: HTMLElement): App {
       // scrolling by the time this runs, and the URL goes back to describing
       // the model.
       //
-      // KNOWN COST: the fragment nav pushed its history entry before this ran,
-      // so the stack now holds two adjacent entries with the same URL. One back
-      // press moves between them and changes nothing — same URL, no hashchange,
-      // no visible response. That is the dead back-button step main.ts's
-      // original replaceState comment set out to avoid, reached by another
-      // route. It is accepted deliberately: a URL that lies about the page is
-      // worse than one inert back press. Only paid when there is state to
-      // protect — with nothing closed the fragment is already honest and is
-      // left alone.
+      // KNOWN COST, and it is worse than a dead step: the fragment nav pushed
+      // its history entry before this ran, so the stack holds two adjacent
+      // entries with the same URL. The first back press changes nothing — same
+      // URL, no hashchange, no visible response — and the second leaves the
+      // site. A visitor who clicks a nav link and presses Back twice to undo it
+      // exits the page rather than returning to where they were. Verified in a
+      // real browser over CDP, not reasoned about.
+      //
+      // Accepted deliberately, because a URL that lies about what it shows is
+      // worse: this page is built to be shared by its address. Only paid when
+      // there is state to protect — with nothing closed the fragment is already
+      // an honest description of the page and is left alone.
       if (closed.size > 0) {
         history.replaceState(null, "", writeHash(closed) || location.pathname);
       }

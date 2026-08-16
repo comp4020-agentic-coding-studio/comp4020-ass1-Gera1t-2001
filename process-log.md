@@ -448,3 +448,22 @@ these entries at the end; it is not written directly.
 - **Curated prompt:** "three times in this session a test asserted a serialised
   form rather than the thing it means — same shape every time. That belongs in
   the harness, not in my review."
+
+---
+
+- **Date/time:** 2026-08-16, evening
+- **Tag:** `[routine]`
+- **What happened:** The `KNOWN COST` comment on the URL rewrite understated the
+  cost. It said one back press does nothing, which is true but stops one step
+  early: the second press leaves the site entirely.
+- **What I did instead of the obvious thing:** Nothing clever — corrected the
+  comment to say what the browser actually does. Worth logging because the whole
+  point of that comment is that a reader can weigh the trade without pressing
+  Back themselves, and a comment that stops halfway through the consequence is
+  no better than the missing comment it replaced.
+- **How I knew it was right:** It is the CDP result from the previous commit,
+  read to the end rather than to the first interesting line: first Back leaves
+  the URL unchanged with the state intact, second Back drops off the page.
+- **Citation:** this commit; the `KNOWN COST` comment in `src/ui/app.ts`.
+- **Curated prompt:** "'one press does nothing, the second leaves the page' is
+  worse than a dead step and the comment should say exactly that."

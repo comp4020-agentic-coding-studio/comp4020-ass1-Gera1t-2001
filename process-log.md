@@ -685,3 +685,36 @@ these entries at the end; it is not written directly.
   children. Tell me what a screen reader actually announces on a single toggle —
   the full concatenated string. I am asking whether anyone has ever read the
   thing this page says out loud."
+
+---
+
+- **Date/time:** 2026-08-16, night
+- **Tag:** `[harness]`
+- **What happened:** The provenance rule I wrote two commits earlier said to
+  attribute a red before acting on it, and prescribed one defence: make the
+  sensor report a known-good case first. Then a cache produced a **false green** —
+  three measurements reporting "no change" after a real change — and I noticed
+  that the rule as written does not cover it. Nothing triggers the check, because
+  the sensor says the thing you were hoping for. Worse, a cached page passes the
+  known-good case perfectly, so the prescribed defence runs clean and proves
+  nothing.
+- **What I did instead of the obvious thing:** The obvious move was to leave it,
+  since the cache trap was already recorded as its own bullet with the concrete
+  fix. But a rule that names a trap without naming the defence that actually
+  catches it is worse than no rule — it reads as covered. So I separated the two
+  demonstrations explicitly: a false red is caught by showing the sensor reports
+  a known-good case; a false green is caught only by showing the sensor
+  **responds to a deliberate change**. Edit a value, watch the number move, put
+  it back — or read the identity of what loaded rather than only its behaviour.
+- **How I knew it was right:** Tested the old rule against the incident it was
+  supposed to cover and it failed: every step of "make it report a known-good
+  case" passes against a cached bundle, because the cached page is a perfectly
+  good page — just the wrong one. That is the whole point. A rule has to be
+  checked against the failure it claims to prevent, not only against the failure
+  that prompted it.
+- **Citation:** this commit; `CLAUDE.md` → the false-green bullet in "Verifying
+  what you actually shipped".
+- **Curated prompt:** "a false green produces no red to attribute — there is
+  nothing to trigger the check. The provenance rule asks you to show the sensor
+  reports a known-good case; a false green requires showing the sensor RESPONDS
+  TO A DELIBERATE CHANGE."

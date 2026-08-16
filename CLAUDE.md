@@ -239,6 +239,20 @@ what held true regardless of what was being built.
   believing an ad-hoc sensor's red, make it report a case you already know is
   good: had the script asserted "the button fires at all" first, it would have
   named its own fault instead of the code's.
+- **A false green needs a different demonstration, and it is the one to reach
+  for.** The bullet above defends against a false red, and it is triggered by
+  the red itself. Nothing triggers a false green: the sensor says the thing you
+  hoped, so there is no moment where you stop and attribute it. That happened
+  here — `Page.navigate` kept serving a cached bundle straight through
+  `Network.setCacheDisabled`, and three consecutive measurements reported "no
+  change" after a real change. Showing the sensor reports a *known-good case*
+  does not catch that; a cached page passes the known-good case perfectly.
+  **Show instead that the sensor responds to a deliberate change** — edit the
+  value, confirm the number moves, put it back; or read the identity of what
+  was loaded (the bundle name, a version string) rather than only its
+  behaviour. Two different demonstrations, and only the second one catches a
+  stale read. A false green is the more dangerous of the two, because "nothing
+  moved" is exactly what a fix that did not work looks like.
 - **Cache-bust every CDP navigation.** `Page.navigate` to an
   already-visited URL reuses the cached bundle, and `Network.setCacheDisabled`
   did not stop it here. A measurement then describes the *previous* build and

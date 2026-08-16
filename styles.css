@@ -394,6 +394,34 @@ h2 {
   color: var(--ink-dim);
 }
 
+/* Sits with the hint above the list, so it is where the eye already is after
+   closing something. No :focus-visible rule of its own — the global one at the
+   top of this file covers it, and a second would only drift. */
+.reopen {
+  margin: 0 0 1.5rem;
+  padding: 0.5rem 0.9rem;
+  border: 1px solid var(--edge);
+  border-radius: 3px;
+  background: none;
+  color: var(--ink-dim);
+  font: inherit;
+  font-size: 0.9rem;
+  cursor: pointer;
+}
+
+.reopen:hover {
+  border-color: var(--moving);
+  color: var(--moving);
+}
+
+/* The heading takes focus after reopening. It is not an interactive control,
+   so it must never look like one — the browser only paints the global outline
+   here when the visitor arrived by keyboard, which is exactly when they need
+   to see where focus went. */
+.controls__heading:focus {
+  outline: none;
+}
+
 .switches {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(15.5rem, 1fr));

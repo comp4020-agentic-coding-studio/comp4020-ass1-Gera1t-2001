@@ -41,6 +41,30 @@ function nextClosed(
       else next.add(intent.id);
       return next;
     }
+    case "reopen-all":
+      return new Set();
+  }
+}
+
+/**
+ * How an intent should touch the history stack.
+ *
+ * The reason `Intent` is tagged rather than one callback per control: this is a
+ * per-intent decision, not a per-app one. Toggling a strait is exploration and
+ * rewrites the current entry, so the back button does not fill with steps.
+ * Reopening everything is destructive — several closed straits gone at once,
+ * with no other route back — so it is the one interaction here the back button
+ * should undo.
+ *
+ * Also returns a value with no `default`, so a new variant cannot be added
+ * without answering this question as well as the state one above.
+ */
+function historyMode(intent: Intent): "push" | "replace" {
+  switch (intent.type) {
+    case "toggle":
+      return "replace";
+    case "reopen-all":
+      return "push";
   }
 }
 
@@ -53,9 +77,9 @@ export function start(root: HTMLElement): App {
 
   const view = mount(root, (intent) => {
     closed = nextClosed(intent, closed);
-    // replaceState, not pushState: toggling a strait is exploring the model,
-    // not navigating, and it should not fill the back button with steps.
-    history.replaceState(null, "", writeHash(closed) || location.pathname);
+    const url = writeHash(closed) || location.pathname;
+    if (historyMode(intent) === "push") history.pushState(null, "", url);
+    else history.replaceState(null, "", url);
     render();
   });
 
@@ -91,6 +115,12 @@ export function start(root: HTMLElement): App {
       return;
     }
     closed = readHash(location.hash);
+    // One state, one URL. `#closed=` and a bare path both mean baseline, and
+    // the bare path is canonical — so without this, reaching baseline by a
+    // preset link and reaching it by the reopen-all control would leave two
+    // different addresses for the same page. replaceState, because normalising
+    // a spelling is not a navigation.
+    history.replaceState(null, "", writeHash(closed) || location.pathname);
     render();
   };
   addEventListener("hashchange", onHashChange);

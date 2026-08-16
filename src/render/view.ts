@@ -56,7 +56,9 @@ export interface View {
  * and how it touches history, and that decision belongs in one exhaustive
  * switch rather than scattered across a growing parameter list.
  */
-export type Intent = { readonly type: "toggle"; readonly id: ChokepointId };
+export type Intent =
+  | { readonly type: "toggle"; readonly id: ChokepointId }
+  | { readonly type: "reopen-all" };
 
 /**
  * Build the interface once, then update it in place.
@@ -141,8 +143,17 @@ export function mount(
 
   // ── Chokepoint switches ─────────────────────────────────────────────────
   const controls = el("section", { class: "controls", id: "chokepoints" });
+  // tabindex="-1" so focus can be moved here deliberately without adding a tab
+  // stop. Reopening everything removes the control that did it from the tab
+  // order, and focus would otherwise fall to <body> — as it also would if the
+  // button were merely disabled rather than hidden.
+  const controlsHeading = el(
+    "h2",
+    { class: "controls__heading", tabindex: "-1" },
+    "Close one and see",
+  );
   controls.append(
-    el("h2", {}, "Close one and see"),
+    controlsHeading,
     // The list is sorted by volume, and that sorting is the argument: it is the
     // ranking everyone reaches for, and it predicts almost nothing. Saying so
     // sets up the subversion without giving away which strait is which.
@@ -153,6 +164,24 @@ export function mount(
         "That order tells you almost nothing about what happens when you close one.",
     ),
   );
+
+  // Only shown once there is something to undo. Hidden rather than removed so
+  // the node is built once like everything else here, and `hidden` keeps it out
+  // of both the tab order and the accessibility tree.
+  const reopen = el(
+    "button",
+    { type: "button", class: "reopen", "data-control": "reopen-all", hidden: "" },
+    "Reopen everything",
+  );
+  reopen.addEventListener("click", () => {
+    onIntent({ type: "reopen-all" });
+    // The update triggered above has already hidden this button, so focus is
+    // on <body> by now. Put it at the top of the group the visitor was using;
+    // the heading also names what they are looking at, which is the context a
+    // screen reader needs after a change this large.
+    controlsHeading.focus();
+  });
+  controls.append(reopen);
 
   const switchList = el("ul", { class: "switches" });
   const switches = new Map<ChokepointId, HTMLButtonElement>();
@@ -316,6 +345,10 @@ export function mount(
       ? verdict(allocation.strandedMbd, rerouted.length, worstDetour)
       : "";
     readout.classList.toggle("readout--verdict", Boolean(only));
+
+    reopen.hidden = allocation.closed.length === 0;
+    reopen.textContent =
+      allocation.closed.length === 1 ? "Reopen it" : "Reopen all of them";
 
     for (const chokepoint of CHOKEPOINTS) {
       const shut = closed.has(chokepoint.id);

@@ -56,10 +56,27 @@ function open(hash = "") {
     switchFor: (id: ChokepointId) =>
       root.querySelector<HTMLButtonElement>(`button[data-chokepoint="${id}"]`),
     readout: () => root.querySelector<HTMLElement>('[data-testid="readout"]')!,
+    reopen: () =>
+      root.querySelector<HTMLButtonElement>('[data-control="reopen-all"]'),
     strandedText: () =>
       root.querySelector<HTMLElement>('[data-testid="readout"] .readout__value')!
         .textContent,
   };
+}
+
+/**
+ * The elements Tab actually reaches — which is the thing the tab-order contract
+ * is about, and is not the same as "elements matching button, [tabindex]".
+ * Hidden elements and negative tabindex are focusable-or-not by rules a
+ * selector cannot express, so express them here once.
+ */
+function tabStops(root: HTMLElement): HTMLElement[] {
+  return [...root.querySelectorAll<HTMLElement>("button, a[href], [tabindex]")].filter(
+    (el) =>
+      !el.hasAttribute("hidden") &&
+      !el.hasAttribute("disabled") &&
+      Number(el.getAttribute("tabindex") ?? "0") >= 0,
+  );
 }
 
 beforeEach(() => {
@@ -96,9 +113,21 @@ describe("the controls are operable", () => {
   });
 
   it("does not put the map markers in the tab order twice", () => {
-    const page = open();
-    const focusable = page.root.querySelectorAll("button, [tabindex]");
-    expect(focusable.length).toBe(CHOKEPOINTS.length);
+    // Opened with a strait shut so the reopen-all control is present too.
+    const page = open("#closed=hormuz");
+
+    // Every stop named, in order, rather than counted. A count passes when the
+    // right number of wrong things is present — a mark quietly replacing a
+    // switch would keep the total intact.
+    expect(tabStops(page.root).map((el) => el.dataset.chokepoint ?? el.dataset.control))
+      .toEqual(["reopen-all", ...CHOKEPOINTS.map((c) => c.id)]);
+
+    // The marks stay pointer affordances: hidden from assistive technology and
+    // absent from the tab order however the map is rebuilt.
+    for (const mark of page.root.querySelectorAll(".mark")) {
+      expect(mark.getAttribute("aria-hidden")).toBe("true");
+    }
+    expect(page.root.querySelectorAll(".mark button, .mark [tabindex]")).toHaveLength(0);
     expect(page.root.querySelector('[data-testid="map"]')!.getAttribute("aria-label"))
       .toBeTruthy();
   });
@@ -324,6 +353,75 @@ describe("navigating the page does not reset the model", () => {
 
     expect(page.switchFor("hormuz")!.getAttribute("aria-pressed")).toBe("false");
     expect(page.strandedText()).toBe("0.00");
+  });
+});
+
+describe("reopening everything", () => {
+  it("offers no way back when there is nothing to come back from", () => {
+    const page = open();
+    // Present in the markup or absent entirely is an implementation choice;
+    // what matters is that Tab cannot reach a control that would do nothing.
+    expect(tabStops(page.root).map((el) => el.dataset.control)).not.toContain("reopen-all");
+  });
+
+  it("appears once a chokepoint is closed", () => {
+    const page = open();
+    page.switchFor("hormuz")!.click();
+    expect(tabStops(page.root).map((el) => el.dataset.control)).toContain("reopen-all");
+  });
+
+  it("reopens every strait at once", () => {
+    const page = open();
+    for (const id of ["hormuz", "turkish", "danish"] as ChokepointId[]) {
+      page.switchFor(id)!.click();
+    }
+    expect(Number(page.strandedText())).toBeGreaterThan(0);
+
+    page.reopen()!.click();
+
+    expect(readHash(location.hash)).toEqual(new Set());
+    expect(Number(page.strandedText())).toBeCloseTo(allocate(new Set()).strandedMbd, 2);
+    for (const chokepoint of CHOKEPOINTS) {
+      expect(page.switchFor(chokepoint.id)!.getAttribute("aria-pressed")).toBe("false");
+    }
+  });
+
+  it("leaves focus somewhere useful rather than on the body", () => {
+    const page = open();
+    page.switchFor("hormuz")!.click();
+
+    page.reopen()!.click();
+
+    // The control removes itself from the tab order as it succeeds, so it
+    // cannot keep focus — and `disabled` would drop focus to <body> just the
+    // same. Focus lands at the top of the group the visitor was working in.
+    expect(document.activeElement).not.toBe(document.body);
+    expect(document.activeElement).toBe(page.root.querySelector(".controls h2"));
+  });
+
+  it("agrees with the baseline link on both state and URL", async () => {
+    const byButton = open();
+    byButton.switchFor("hormuz")!.click();
+    byButton.switchFor("suez")!.click();
+    byButton.reopen()!.click();
+    const viaButton = { state: readHash(location.hash), url: location.hash };
+
+    // Tear down before the second page so its listener cannot react as well.
+    for (const app of live.splice(0)) app.destroy();
+    document.body.textContent = "";
+    history.replaceState(null, "", "/");
+
+    const byLink = open();
+    byLink.switchFor("hormuz")!.click();
+    byLink.switchFor("suez")!.click();
+    await navigate("#closed=");
+    const viaLink = { state: readHash(location.hash), url: location.hash };
+
+    // Two routes to baseline — the control and the href a preset link will
+    // use. One state must be one URL, whichever door the visitor came through.
+    expect(viaLink).toEqual(viaButton);
+    expect(viaLink.state).toEqual(new Set());
+    expect(Number(byLink.strandedText())).toBeCloseTo(allocate(new Set()).strandedMbd, 2);
   });
 });
 

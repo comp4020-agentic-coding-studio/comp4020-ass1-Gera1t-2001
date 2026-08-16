@@ -62,6 +62,9 @@ interface Pairing {
 
 const PAIRINGS: readonly Pairing[] = [
   { what: "body prose", fg: "ink", bg: "deep", min: AA_TEXT },
+  // Also covers the reopen-all button, which is ink-dim on the page ground.
+  // Its --edge border carries no meaning the label does not already carry, so
+  // 1.4.11 does not bite on it — the control is identified by its text.
   { what: "standfirst and hints", fg: "ink-dim", bg: "deep", min: AA_TEXT },
   { what: "switch notes on a panel", fg: "ink-dim", bg: "panel", min: AA_TEXT },
   // Used for flow notes, the readout subtitle and the reroutability label —

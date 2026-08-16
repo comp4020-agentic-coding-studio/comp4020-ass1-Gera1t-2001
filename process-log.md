@@ -467,3 +467,47 @@ these entries at the end; it is not written directly.
 - **Citation:** this commit; the `KNOWN COST` comment in `src/ui/app.ts`.
 - **Curated prompt:** "'one press does nothing, the second leaves the page' is
   worse than a dead step and the comment should say exactly that."
+
+---
+
+- **Date/time:** 2026-08-16, evening
+- **Tag:** `[judgement]`
+- **What happened:** The "reopen all" control needed somewhere for focus to go.
+  It only exists while at least one strait is closed, so succeeding removes it
+  from the tab order and drops focus to `<body>` — the visitor's place on the
+  page is gone at exactly the moment they have made the biggest change to it.
+  The two candidate fixes were "keep it rendered but disabled" and "move focus
+  to the heading".
+- **What I did instead of the obvious thing:** "Keep it rendered and disabled"
+  is the obvious choice and it is wrong, but only measurably so. I drove a real
+  browser over CDP and checked: setting `disabled` on a focused button drops
+  focus to `<body>` exactly as removing it does, so that option solves nothing —
+  it only looks like it does. `aria-disabled` does preserve focus, but it leaves
+  a permanent tab stop advertising an action that does nothing most of the time.
+  So focus moves to the "Close one and see" heading, given `tabindex="-1"` so it
+  can receive focus without becoming a tab stop: it puts the visitor at the top
+  of the group they were working in, and names what they are looking at, which
+  is the context a screen reader needs after seven controls change at once.
+- **How I knew it was right:** The `disabled` behaviour was measured, not
+  assumed — that is the whole basis for rejecting the option, so asserting it
+  would have been worthless. Then the browser-only test the design was chosen
+  for: `pushState` for reopen-all against `replaceState` for a toggle means Back
+  should undo it, and no vitest assertion can see the difference because jsdom
+  simulates the history stack. Closed Hormuz and Suez, activated the control
+  with a real keyboard Enter, pressed Back: both straits closed again,
+  `#closed=hormuz,suez` restored. Focus landed on `controls__heading`, not
+  `BODY`, at both marking viewports. One screenshot claim got a second reading —
+  `#closed=hormuz` and `#closed=hormuz,suez` both display 16.10, which looks
+  like a stuck number and is not: the model gives Suez alone 0.00 stranded
+  because it has the Cape detour, so adding it to a closed Hormuz strands
+  nothing further. 121 → 126 green.
+- **Citation:** this commit; `historyMode` in `src/ui/app.ts`, and the
+  `reopening everything` block in `spec/interaction.test.ts`.
+- **Assertion rewritten as agreed:** the tab-order test counted focusable
+  elements, which a new control would have "fixed" by bumping the number — a
+  bumped count is indistinguishable from weakening it. It now names every tab
+  stop in order, derived from `CHOKEPOINTS`, through a `tabStops()` helper that
+  expresses what Tab actually reaches rather than what a selector matches.
+- **Curated prompt:** "the button removes itself from the DOM when activated,
+  dropping focus to `<body>`. Either keep it rendered and disabled, or move
+  focus to the heading with `tabindex="-1"`. Pick one, do it, say which and why."

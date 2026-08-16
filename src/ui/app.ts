@@ -97,13 +97,13 @@ export function start(root: HTMLElement): App {
       // scrolling by the time this runs, and the URL goes back to describing
       // the model.
       //
-      // KNOWN COST, and it is worse than a dead step: the fragment nav pushed
-      // its history entry before this ran, so the stack holds two adjacent
-      // entries with the same URL. The first back press changes nothing — same
-      // URL, no hashchange, no visible response — and the second leaves the
-      // site. A visitor who clicks a nav link and presses Back twice to undo it
-      // exits the page rather than returning to where they were. Verified in a
-      // real browser over CDP, not reasoned about.
+      // KNOWN COST: the fragment nav pushed its history entry before this ran,
+      // so the stack holds two adjacent entries with the same URL. The first
+      // back press changes nothing — same URL, no hashchange, no visible
+      // response. The second either leaves the site or is equally inert,
+      // depending on whether the visitor arrived here from somewhere else;
+      // measured both ways in a real browser over CDP. Either way Back reads as
+      // broken for a press or two after a nav click, which is the cost.
       //
       // Accepted deliberately, because a URL that lies about what it shows is
       // worse: this page is built to be shared by its address. Only paid when

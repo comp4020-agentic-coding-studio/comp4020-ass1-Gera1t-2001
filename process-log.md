@@ -845,3 +845,41 @@ uncommon and the announced sentence is unaffected.
 - **Curated prompt:** "before you write the copy, list the candidate scenarios
   with the citation each one would rest on, and show me that list. I want to
   approve the claims before they are prose."
+
+---
+
+- **Date/time:** 2026-08-17, early hours
+- **Tag:** `[harness]`
+- **What happened:** The final verification pass found a regression that every
+  check in the roster was green for. Adding the preset row pushed the map off
+  the bottom of the phone viewport: at 390x844 the map showed **8 of its 240
+  pixels** and the readout none at all, so `#closed=hormuz` rendered
+  **byte-identical to baseline**. Someone opening a shared link on a phone saw
+  no map, no number, and no sign that anything was closed. `de3a3c5` had
+  deliberately got the map above the fold at both marking viewports; the presets
+  undid it, and nothing noticed.
+- **What I did instead of the obvious thing:** I nearly did not find it. The
+  pass compares eight screenshots, and I spotted that two files had the same
+  byte size — the obvious read is a coincidence of PNG compression. Comparing
+  the hashes instead showed they were the same image, and the DOM facts printed
+  beside them said `stranded=16.10`, so the page was right and the *view* of it
+  was empty. Rather than guessing at a layout fix I measured the geometry:
+  presets 326px tall, map top at 836 in an 844 viewport. The fix collapses the
+  presets to one inline line below 46rem — 326px to 52px, map back to its full
+  240px — and keeps the notes for assistive technology rather than deleting
+  them, because they carry the cited figures.
+- **How I knew it was right:** Re-measured rather than re-looked: map visible
+  8px → 240px, readout 0px → 50px, and the eight screenshots are now eight
+  distinct images where two were identical before. **Nothing in `pnpm check` can
+  catch this class of fault** — jsdom has no layout, so no vitest assertion can
+  know where the fold is. It is only ever caught by a real render at the marking
+  viewport, which is the reason CLAUDE.md insists on one.
+- **Also corrected:** the `KNOWN COST` comment claimed the second back press
+  after a nav click "leaves the site". Tested in a genuinely fresh tab, where
+  `history.length` is 1 on arrival, and it does not — both presses are inert.
+  The comment now says the second either leaves or is equally inert depending on
+  how the visitor got here, which is what two runs actually showed.
+- **Citation:** this commit; the narrow-viewport preset rules in `styles.css`,
+  and the `KNOWN COST` comment in `src/ui/app.ts`.
+- **Curated prompt:** "a false green here is the expensive one, because this is
+  the pass that says everything is fine."

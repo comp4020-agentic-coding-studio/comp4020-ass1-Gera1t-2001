@@ -507,6 +507,62 @@ h1 {
   background: var(--panel);
 }
 
+/* At phone width the three cards ran to 326px and pushed the map off the
+   bottom of the screen: at 390x844 the map showed 8 of its 240 pixels and the
+   readout none at all, so #closed=hormuz rendered byte-identical to baseline.
+   Someone following a shared link saw no map, no number, and no sign that
+   anything was closed. The map clearing the fold at both marking viewports is
+   a standard this page already set for itself, so here the presets collapse to
+   one compact line of links. The notes are kept for assistive technology
+   rather than removed — they carry the cited figure, and hiding them from the
+   accessibility tree as well would trade one loss for a worse one. */
+@media (width <= 46rem) {
+  .presets {
+    margin-bottom: 0.9rem;
+  }
+
+  .presets__title {
+    display: inline;
+    margin: 0 0.4rem 0 0;
+  }
+
+  .presets__list,
+  .presets__list li {
+    display: inline;
+  }
+
+  .presets__list li + li::before {
+    content: " · ";
+    color: var(--ink-faint);
+  }
+
+  .preset {
+    display: inline;
+    padding: 0;
+    border: none;
+    font-size: 0.9rem;
+  }
+
+  .preset__label {
+    display: inline;
+  }
+
+  .preset__note {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip-path: inset(50%);
+    white-space: nowrap;
+  }
+
+  .preset--current {
+    background: none;
+    text-decoration: underline;
+    text-underline-offset: 0.2em;
+  }
+}
+
 /* ── Switches ─────────────────────────────────────────────────────────── */
 
 .controls,

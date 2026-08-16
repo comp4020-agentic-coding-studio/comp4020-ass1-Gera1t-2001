@@ -638,3 +638,50 @@ these entries at the end; it is not written directly.
 - **Curated prompt:** "you measured the SHORTEST bypass. The risk is the
   THINNEST one at the SMALLEST viewport, which is a different object. Confirm by
   measurement, not by looking."
+
+---
+
+- **Date/time:** 2026-08-16, night
+- **Tag:** `[judgement]`
+- **What happened:** Nobody had ever read this page aloud. The readout was a
+  single live region holding seven text nodes — value, unit, percentage, detour
+  clause, ways-around line, class label, verdict — all re-announced in full on
+  every toggle. Closing three chokepoints to compare them, which is the entire
+  point of the page, read about forty words three times over, of which the
+  changing part was two numbers.
+- **What I did instead of the obvious thing:** I first inferred the problem from
+  `textContent` and got it wrong — it concatenates to
+  `"…in useno way around16.10…"`, so I expected mangled speech. Reading Chrome's
+  accessibility tree instead showed seven clean `StaticText` nodes: block
+  boundaries prevent the collision, and `textContent` was simply the wrong
+  instrument. The real fault was volume, not mangling. So rather than trimming
+  spans, I separated two things that had been conflated: **reachable and
+  announced-on-every-change are not the same requirement.** The detail stays in
+  the DOM, unhidden, reachable in browse mode — satisfying the earlier rule that
+  the bypass figures must not be pointer-only — while a purpose-written sentence
+  becomes the only live region. It can be composed for the ear
+  ("16.10 of 34.50 million barrels a day stranded") instead of being assembled
+  from fragments written for the eye.
+- **How I knew it was right:** The AX tree again, after: one live region, one
+  text node, fifteen words, down from seven nodes and about forty. It also
+  caught a trap that would have made the whole change a no-op — `<output>`
+  carries an implicit `role="status"` and therefore an implicit live region, so
+  removing the `aria-live` attribute alone would have changed nothing while
+  looking like a fix. The element had to become a `div`. Screenshotted the
+  readout panel afterwards to confirm the swap cost nothing visually.
+- **Existing assertion changed, and named rather than quietly edited:**
+  `announces the readout to assistive technology` asserted that the readout
+  element carries `aria-live="polite"` — the *mechanism*, not the contract. The
+  contract is that a change is announced, and it still is, from a different
+  element. This is the serialisation rule from `CLAUDE.md` wearing another hat:
+  the test named how the page was built rather than what it does. The
+  replacement is strictly stronger — it counts `[aria-live]`, `output` and
+  `role="status"` together, so an implicitly-live element cannot slip past, and
+  requires **exactly one**, because two regions means every toggle is announced
+  twice.
+- **Citation:** this commit; `spokenSummary` in `src/render/view.ts` and the
+  `what the page says out loud` block in `spec/interaction.test.ts`.
+- **Curated prompt:** "the readout is one aria-live region and now carries seven
+  children. Tell me what a screen reader actually announces on a single toggle —
+  the full concatenated string. I am asking whether anyone has ever read the
+  thing this page says out loud."

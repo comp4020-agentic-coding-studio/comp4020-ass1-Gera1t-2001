@@ -133,9 +133,20 @@ describe("the controls are operable", () => {
       .toBeTruthy();
   });
 
-  it("announces the readout to assistive technology", () => {
+  it("announces what changed to assistive technology, exactly once", () => {
     const page = open();
-    expect(page.readout().getAttribute("aria-live")).toBe("polite");
+
+    // Counting <output> and role="status" too, because both are implicitly
+    // live: dropping an aria-live attribute while leaving an <output> in place
+    // would look like a change and be none. And "exactly one" is the real
+    // contract — two regions means every toggle is announced twice.
+    const regions = [
+      ...page.root.querySelectorAll('[aria-live], output, [role="status"]'),
+    ];
+
+    expect(regions).toHaveLength(1);
+    expect(regions[0].getAttribute("aria-live")).toBe("polite");
+    expect(regions[0].getAttribute("data-testid")).toBe("spoken");
   });
 });
 
@@ -470,6 +481,85 @@ describe("a section fragment still reaches its section", () => {
   it("does not scroll when the fragment carries state instead", () => {
     open("#closed=hormuz");
     expect(scrolled).not.toHaveBeenCalled();
+  });
+});
+
+describe("what the page says out loud", () => {
+  // Read with Chrome's accessibility tree, not textContent: the readout was one
+  // live region of seven nodes, so a single toggle announced about forty words
+  // of which two numbers were the answer. Closing three straits to compare
+  // them — the thing this page is for — read the whole thing three times.
+  //
+  // The detail is not hidden, only taken out of the live region. Reachable and
+  // announced-on-every-change are different things, and the numbers stay
+  // reachable in browse mode.
+  const spokenEl = (page: ReturnType<typeof open>) =>
+    page.root.querySelector<HTMLElement>('[data-testid="spoken"]')!;
+  const words = (text: string) => text.trim().split(/\s+/).filter(Boolean).length;
+
+  it("puts the live region on a sentence written for speech", () => {
+    const page = open();
+    // The visual readout is composed for the eye — "16.10", "mb/d stranded",
+    // "47% of the 34.50 modelled" — which is a list, not a sentence.
+    expect(page.readout().getAttribute("aria-live")).toBeNull();
+    expect(spokenEl(page).getAttribute("aria-live")).toBe("polite");
+    expect(spokenEl(page).getAttribute("role")).toBe("status");
+  });
+
+  it("names what closed and how much stopped", () => {
+    const page = open("#closed=hormuz");
+    const text = spokenEl(page).textContent!;
+    const hormuz = CHOKEPOINTS.find((c) => c.id === "hormuz")!;
+    const stranded = allocate(new Set<ChokepointId>(["hormuz"])).strandedMbd;
+
+    expect(text).toContain(hormuz.name);
+    expect(
+      [...text.matchAll(/\d+(?:\.\d+)?/g)]
+        .map((m) => Number(m[0]))
+        .find((n) => Math.abs(n - stranded) < 0.005),
+      `"${text}" never states the ${stranded} mb/d the model stranded`,
+    ).toBeDefined();
+  });
+
+  it("stays far shorter than the readout it summarises", () => {
+    const page = open("#closed=hormuz");
+    expect(words(spokenEl(page).textContent!)).toBeLessThan(
+      words(page.readout().textContent!) / 2,
+    );
+  });
+
+  it("says something different for each chokepoint, as the readout does", () => {
+    // The spoken counterpart of "no chokepoint reads as a broken switch": four
+    // of the seven strand nothing, and a summary that said "nothing stranded"
+    // for all four would be the same dead-switch bug, in speech.
+    const reset = () => {
+      for (const app of live.splice(0)) app.destroy();
+      document.body.textContent = "";
+      history.replaceState(null, "", "/");
+    };
+
+    const baseline = spokenEl(open()).textContent!.trim();
+    reset();
+
+    const heard = new Set<string>();
+    for (const chokepoint of CHOKEPOINTS) {
+      const text = spokenEl(open(`#closed=${chokepoint.id}`)).textContent!.trim();
+      // Against baseline, not merely against each other: the names differ, so
+      // "all seven are distinct" would pass on the name alone even if every
+      // outcome clause were identical.
+      expect(text, `closing ${chokepoint.id} said nothing new`).not.toBe(baseline);
+      heard.add(text);
+      reset();
+    }
+    expect(heard.size).toBe(CHOKEPOINTS.length);
+  });
+
+  it("leaves the detail reachable rather than hiding it", () => {
+    const page = open("#closed=hormuz");
+    expect(page.readout().getAttribute("aria-hidden")).toBeNull();
+    expect(
+      page.root.querySelector('[data-testid="bypass"]')!.textContent,
+    ).toBeTruthy();
   });
 });
 

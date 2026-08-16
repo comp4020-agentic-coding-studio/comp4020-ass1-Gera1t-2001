@@ -148,10 +148,13 @@ export function mount(
   figure.append(chart);
 
   // ── The number ──────────────────────────────────────────────────────────
-  const readout = el("output", {
+  // A div, not an <output>. <output> carries an implicit role of status, which
+  // carries an implicit aria-live — so simply dropping the attribute would
+  // have left this region live and the change would have done nothing. The
+  // spoken summary below is now the page's only live region.
+  const readout = el("div", {
     class: "readout",
     "data-testid": "readout",
-    "aria-live": "polite",
   });
   const readoutValue = el("span", { class: "readout__value" }, "0.00");
   const readoutUnit = el("span", { class: "readout__unit" }, "mb/d stranded");
@@ -193,6 +196,20 @@ export function mount(
     readoutVerdict,
   );
   figure.append(readout);
+
+  // The readout is composed for the eye: a number, a unit, a percentage, a
+  // detour clause, a class label and a verdict — six fragments that read as a
+  // list when spoken, and were announced in full on every single toggle. This
+  // is the same answer written as a sentence. The readout keeps every figure
+  // and stays reachable in browse mode; it is simply no longer re-read aloud
+  // each time something changes.
+  const spoken = el("p", {
+    class: "sr-only",
+    role: "status",
+    "aria-live": "polite",
+    "data-testid": "spoken",
+  });
+  figure.append(spoken);
   root.append(figure);
 
   // ── Chokepoint switches ─────────────────────────────────────────────────
@@ -400,6 +417,8 @@ export function mount(
       : "";
     readout.classList.toggle("readout--verdict", Boolean(only));
 
+    spoken.textContent = spokenSummary(allocation, rerouted.length, worstDetour);
+
     // Both figures come from the data and the result — never a literal, so
     // changing a capacity in src/data/ moves the page with it.
     let usedTotal = 0;
@@ -503,6 +522,44 @@ export function mount(
   }
 
   return { update };
+}
+
+/**
+ * The same answer as the readout, written to be heard rather than scanned.
+ *
+ * Built from the result like the verdict is, so it cannot drift out of step,
+ * and deliberately short: this is announced on every toggle, and a visitor
+ * comparing three chokepoints hears it three times.
+ */
+function spokenSummary(
+  allocation: Allocation,
+  reroutedFlows: number,
+  worstDetour: number,
+): string {
+  const names = allocation.closed.map((id) => CHOKEPOINT_BY_ID.get(id)!.name);
+  if (names.length === 0) return "Nothing closed. Every route is its shortest.";
+
+  const opening =
+    names.length === 1
+      ? `${names[0]} closed.`
+      : `${names.slice(0, -1).join(", ")} and ${names[names.length - 1]} closed.`;
+
+  // Four of the seven strand nothing. Saying only "nothing stranded" for those
+  // would be the dead-switch bug in speech, so the detour is the answer there.
+  const outcome =
+    allocation.strandedMbd > 0
+      ? `${mbd(allocation.strandedMbd)} of ${mbd(TOTAL_MBD)} million barrels a day stranded.`
+      : reroutedFlows > 0
+        ? `Nothing stranded; ${reroutedFlows} ${reroutedFlows === 1 ? "flow" : "flows"} rerouted, up to ${worstDetour.toFixed(1)} days longer.`
+        : "Nothing stranded, and no route is longer.";
+
+  // Named only when one is shut, matching the panel: with several closed there
+  // is no single class to name.
+  const only = names.length === 1 ? CHOKEPOINT_BY_ID.get(allocation.closed[0]) : undefined;
+  const label = only ? rerouteLabel(only.reroutability) : "";
+  const verdictClass = label ? ` ${label[0].toUpperCase()}${label.slice(1)}.` : "";
+
+  return `${opening} ${outcome}${verdictClass}`;
 }
 
 function rerouteLabel(reroutability: (typeof CHOKEPOINTS)[number]["reroutability"]): string {

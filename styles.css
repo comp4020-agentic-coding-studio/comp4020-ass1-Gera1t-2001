@@ -58,6 +58,19 @@ a {
   left: -9999px;
 }
 
+/* Present to assistive technology, absent from the page. Not display:none —
+   that would remove it from the accessibility tree too, which is the one thing
+   it is for. */
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  margin: 0;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+
 .skip:focus {
   position: static;
   display: inline-block;

@@ -2,12 +2,12 @@
 
 ## What I built
 
-An explainer about the maritime chokepoints oil moves through: seven straits,
-eleven flows, 34.5 million barrels a day. Closing one re-allocates every flow
-that transits it — a sea detour first, then bypass pipelines to their capacity,
-and whatever fits in neither is stranded. The argument is that volume does not
-predict consequence: the largest chokepoint on earth strands nothing, and one a
-sixth its size stops everything that uses it.
+An explainer about the chokepoints oil moves through: seven straits, 34.5 million
+barrels a day. Closing one re-allocates every flow through it — a sea detour,
+then a bypass pipeline — and what fits in neither is stranded. Cut from all cargo
+to one commodity for the reason `CLAUDE.md` and the page both give: two units
+make the single stranded total unaddable. The largest strait strands nothing; one
+a sixth its size stops everything.
 
 ## The moments that mattered
 

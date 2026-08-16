@@ -56,6 +56,13 @@ I am still not a strong developer, and with three sessions running I often
 cannot tell whether what I am handed is right. I have started describing it to
 myself as being a monkey holding a machine gun.
 
+The engineering is the part I am weakest at. The idea was not. I did a supply
+chain undergrad, and the first decision on this project was mine: I wanted a
+shipping map covering every kind of cargo, and I cut it to one commodity,
+because oil is measured in barrels a day and LNG in cubic feet — two units make
+the one number the page rests on unaddable. I could not have written most of
+this code. I could decide what it had to satisfy.
+
 Correcting an agent in the next message requires me to be right. Changing what
 its work runs against does not. Four more rules went into CLAUDE.md the same way
 this week. Three are about not trusting a sensor I had just built; the fourth is

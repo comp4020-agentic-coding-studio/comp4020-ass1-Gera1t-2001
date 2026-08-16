@@ -1059,3 +1059,31 @@ uncommon and the announced sentence is unaffected.
   `scripts/check-evidence.ts`, and `check:evidence` gaining a third line.
 - **Curated prompt:** "close the sensor gap you found. If it turns up a hash
   that does not resolve, tell me before fixing it."
+
+---
+
+- **Date/time:** 2026-08-17, morning
+- **Tag:** `[routine]`
+- **What happened:** Added the scope decision's origin to `PROCESS.md` and a
+  paragraph to the reflection, both about the same call: the piece began as a map
+  of all cargo and was cut to one commodity because oil is measured in barrels a
+  day and LNG in cubic feet, and two units make the single stranded total
+  unaddable.
+- **What I did instead of the obvious thing:** Verified the reasoning was already
+  in the repo before writing prose that claims it. It is, twice —
+  `CLAUDE.md` → "One unit" and the caveats at `index.html:81`, and the page does
+  rest on one scalar (`readoutValue.textContent = mbd(allocation.strandedMbd)`).
+  So the new sentences point at an existing decision rather than making a fresh
+  claim. The supply-chain background in the reflection is personal and taken as
+  given; the one-unit reasoning is not, and that is the part the repo backs.
+- **How I knew it was right:** The addition pushed `PROCESS.md` to 637 words,
+  over the assignment's hard 600, with the "What I built" paragraph at 117
+  instead of roughly 70. Trimmed the paragraph rather than a moment, because the
+  four moments are fixed and are where the marks are. Now 593 total, paragraph
+  73, four moments, and both checks green.
+- **Flagged, not fixed:** the reflection is 604 words against
+  `reflections/README.md`'s "150--300 words is plenty". Advisory rather than
+  checked, and it answers both standing prompts, but it is roughly double the
+  guidance and about four minutes read aloud. Left for the author to decide.
+- **Citation:** this commit; `PROCESS.md` → "What I built", and the final section
+  of `reflections/assignment-1.md`.

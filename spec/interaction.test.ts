@@ -276,6 +276,55 @@ describe("the URL is the state", () => {
   });
 });
 
+/** Change the hash and wait until every hashchange listener has run. */
+async function navigate(hash: string): Promise<void> {
+  const fired = new Promise<void>((resolve) => {
+    addEventListener("hashchange", () => resolve(), { once: true });
+  });
+  location.hash = hash;
+  await fired;
+  // This listener may have run before the app's, so yield once more before
+  // asserting that the app did — or did not — react.
+  await new Promise((resolve) => setTimeout(resolve, 0));
+}
+
+describe("navigating the page does not reset the model", () => {
+  // index.html's masthead nav and skip link target #chokepoints, #flows and
+  // #sources. Those arrive as hashchange, and a handler that treats every hash
+  // as model state reads no `closed=` key, gets an empty set, and silently
+  // reopens everything the visitor closed.
+
+  it("keeps the closed set when the visitor uses the section nav", async () => {
+    const page = open();
+    page.switchFor("hormuz")!.click();
+
+    await navigate("#flows");
+
+    expect(location.hash, "the nav should still have moved the URL").toBe("#flows");
+    expect(
+      page.switchFor("hormuz")!.getAttribute("aria-pressed"),
+      "visiting a section fragment reopened a closed strait",
+    ).toBe("true");
+    expect(Number(page.strandedText())).toBeCloseTo(
+      allocate(new Set<ChokepointId>(["hormuz"])).strandedMbd,
+      2,
+    );
+  });
+
+  it("still adopts an explicitly empty state", async () => {
+    const page = open();
+    page.switchFor("hormuz")!.click();
+
+    // `#closed=` names the empty set rather than naming a section, so unlike
+    // `#flows` it is a claim about the model and must be obeyed. This is the
+    // href a "reopen everything" link will use.
+    await navigate("#closed=");
+
+    expect(page.switchFor("hormuz")!.getAttribute("aria-pressed")).toBe("false");
+    expect(page.strandedText()).toBe("0.00");
+  });
+});
+
 describe("a section fragment still reaches its section", () => {
   // The browser resolves a fragment against the page as it was parsed, before
   // the interface exists, so start() re-applies it after the first render.

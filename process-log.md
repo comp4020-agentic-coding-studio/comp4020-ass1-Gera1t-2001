@@ -321,3 +321,43 @@ these entries at the end; it is not written directly.
   that the extraction was clean; it gets its own red-to-green commit next, which
   is also the independent second reading confirming the bug is real rather than
   read off the code path.
+
+---
+
+- **Date/time:** 2026-08-16, afternoon
+- **Tag:** `[judgement]`
+- **What happened:** The wiring extracted in the previous commit exposed a live
+  bug. `index.html`'s masthead nav and skip link target `#chokepoints`, `#flows`
+  and `#sources`; those arrive as `hashchange`, and the handler fed every hash to
+  `readHash`, which finds no `closed=` key and returns an empty set. Close
+  Hormuz, click "Flows" to look at the table, and every strait silently reopens
+  with the URL now reading `#flows`, so the state is not even recoverable. It is
+  on the keyboard path too, via the skip link.
+- **What I did instead of the obvious thing:** The obvious fix is to make
+  `readHash` return `null` when there is no `closed=` key and treat that as "no
+  change" — which would have broken two existing assertions in `a state is
+  shareable`, and existing assertions are not to be weakened to make new work
+  pass. I added a separate predicate, `carriesClosedState`, leaving `readHash`
+  and all four of its tests untouched. The non-obvious part is what the predicate
+  keys on and where it applies: **key presence, not value**, so that `#closed=`
+  (which names the empty set, and is the href a "reopen everything" link will
+  use) and `#flows` land on opposite sides even though `readHash` returns an
+  empty set for both. And it applies to the hashchange handler *only* — the
+  initial read deliberately keeps no predicate at all, because on first load the
+  URL is the sole source of truth and an empty hash correctly means "nothing
+  closed". That asymmetry is the fix: the bug exists precisely because one rule
+  was reused at a moment when prior state existed.
+- **How I knew it was right:** Wrote the failing test first and watched it
+  reproduce the bug — `visiting a section fragment reopened a closed strait:
+  expected 'false' to be 'true'`. That mattered more than usual: I had found this
+  by reading the code path, not by observing it, and CLAUDE.md's rule is that a
+  reading is not evidence until something independent confirms it. A second test
+  pinned the case the fix must *not* break, `#closed=` still adopting baseline,
+  and it was green before and after — so the predicate discriminates rather than
+  just refusing. 117 → 119 green.
+- **Citation:** this commit; `carriesClosedState` in `src/ui/permalink.ts`, and
+  the `navigating the page does not reset the model` block in
+  `spec/interaction.test.ts` red → green.
+- **Curated prompt:** "decide and tell me what each of these means, because the
+  predicate defines it: `#closed=hormuz`, `#closed=`, `#flows`, `#`, `""` — and
+  note the initial read and the hashchange handler cannot use the same rule."

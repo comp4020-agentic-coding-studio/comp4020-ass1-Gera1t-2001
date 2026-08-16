@@ -22,6 +22,23 @@ export function readHash(hash: string): Set<ChokepointId> {
   return closed;
 }
 
+/**
+ * Does this hash make a claim about the model, or is it a section fragment?
+ *
+ * Key presence, not value — which is the whole distinction. `#closed=hormuz`
+ * and `#closed=` both make a claim; the second names the empty set, and it is
+ * the href a "reopen everything" link uses. `#flows` and a bare `#` do not:
+ * those are navigation within the page, and arriving at one must never wipe the
+ * state the visitor built.
+ *
+ * Only the hashchange handler needs this. On first load the URL is the sole
+ * source of truth, so there is no earlier state to protect and an empty hash
+ * correctly means "nothing closed".
+ */
+export function carriesClosedState(hash: string): boolean {
+  return new URLSearchParams(hash.replace(/^#/, "")).has(KEY);
+}
+
 /** Emitted in the chokepoints' declared order, so the same state is one URL. */
 export function writeHash(closed: ReadonlySet<ChokepointId>): string {
   const ids = CHOKEPOINTS.filter((chokepoint) => closed.has(chokepoint.id)).map(

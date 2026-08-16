@@ -2,7 +2,7 @@ import { allocate } from "../model/allocate";
 import type { ChokepointId } from "../model/types";
 import { mount } from "../render/view";
 import type { Intent } from "../render/view";
-import { readHash, writeHash } from "./permalink";
+import { carriesClosedState, readHash, writeHash } from "./permalink";
 
 /**
  * The wiring between the URL, the model and the view.
@@ -60,6 +60,12 @@ export function start(root: HTMLElement): App {
   });
 
   const onHashChange = () => {
+    // Someone can arrive at a shared state, or edit the hash by hand — but the
+    // masthead nav and the skip link move the hash too, and those must not be
+    // read as "nothing is closed". Unlike the initial load, there is state here
+    // worth protecting, so only a hash that claims something about the model
+    // gets to replace it.
+    if (!carriesClosedState(location.hash)) return;
     closed = readHash(location.hash);
     render();
   };
@@ -72,8 +78,10 @@ export function start(root: HTMLElement): App {
   // masthead-plus-footer, then the interface is inserted above and that offset
   // lands somewhere in the middle of the map. Re-apply the fragment now that
   // the sections it names are actually there.
+  // The same predicate as the handler above, rather than a second informal
+  // copy of the grammar: `startsWith("#closed")` also swallowed `#closedfoo`.
   const fragment = location.hash;
-  if (fragment.length > 1 && !fragment.startsWith("#closed")) {
+  if (fragment.length > 1 && !carriesClosedState(fragment)) {
     let target: Element | null = null;
     try {
       target = document.querySelector(fragment);

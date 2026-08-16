@@ -1,6 +1,6 @@
 import { CHOKEPOINTS, CHOKEPOINT_BY_ID } from "../data/chokepoints";
 import { FLOWS, TOTAL_MBD } from "../data/flows";
-import { LEGS } from "../data/network";
+import { BYPASSES, LEGS } from "../data/network";
 import type { Allocation, ChokepointId } from "../model/types";
 import {
   LAND_PATH,
@@ -95,10 +95,40 @@ export function mount(
     svg("path", { d: LAND_PATH, class: "land" }),
   );
 
+  // ── The ways around ─────────────────────────────────────────────────────
+  // Drawn once and never rebuilt: these are fixed infrastructure, not a
+  // result. At baseline every one of them carries nothing, so without this the
+  // visitor cannot see that the alternatives exist — only that some closures
+  // hurt and others do not, with no visible reason why. "Is there another way
+  // round, and how wide is it" is the physical fact the three classes turn on.
+  //
+  // Width comes from the same scale as the flows, deliberately: it is what
+  // makes Petroline read as narrower than the traffic it is supposed to
+  // absorb. First in the stack, so a bypass actually carrying oil is painted
+  // over by its flow and reads as in use rather than spare.
+  //
+  // "Ways around", not "bypass pipelines" — the Kiel Canal is one of these and
+  // is a canal, so the dash pattern varies by kind instead.
+  const bypassLayer = svg("g", { class: "bypasses" });
+  const bypassLabels = new Map<string, SVGTitleElement>();
+
+  for (const bypass of BYPASSES) {
+    const line = svg("path", {
+      d: legPath(bypass.id),
+      class: `bypass bypass--${bypass.kind}`,
+      "stroke-width": strokeFor(bypass.capacityMbd ?? 0).toFixed(2),
+      "data-leg": bypass.id,
+    });
+    const label = document.createElementNS(SVG_NS, "title");
+    line.append(label);
+    bypassLabels.set(bypass.id, label);
+    bypassLayer.append(line);
+  }
+
   const flowLayer = svg("g", { class: "flows" });
   const strandLayer = svg("g", { class: "strands" });
   const markLayer = svg("g", { class: "marks" });
-  chart.append(flowLayer, strandLayer, markLayer);
+  chart.append(bypassLayer, flowLayer, strandLayer, markLayer);
   figure.append(chart);
 
   // ── The number ──────────────────────────────────────────────────────────
@@ -122,6 +152,13 @@ export function mount(
     class: "readout__detour",
     "data-testid": "detour",
   });
+  // The map shows the ways around and how wide they are; this is the same fact
+  // for anyone not using a pointer. One short clause, because it sits inside
+  // the aria-live region and is announced on every change.
+  const readoutBypass = el("span", {
+    class: "readout__bypass",
+    "data-testid": "bypass",
+  });
   const readoutClass = el("span", {
     class: "readout__class",
     "data-testid": "verdict-class",
@@ -135,6 +172,7 @@ export function mount(
     readoutUnit,
     readoutSub,
     readoutDetour,
+    readoutBypass,
     readoutClass,
     readoutVerdict,
   );
@@ -345,6 +383,28 @@ export function mount(
       ? verdict(allocation.strandedMbd, rerouted.length, worstDetour)
       : "";
     readout.classList.toggle("readout--verdict", Boolean(only));
+
+    // Both figures come from the data and the result — never a literal, so
+    // changing a capacity in src/data/ moves the page with it.
+    let usedTotal = 0;
+    let availableTotal = 0;
+    for (const bypass of BYPASSES) {
+      const capacity = bypass.capacityMbd ?? 0;
+      const used = allocation.bypassUsageMbd[bypass.id] ?? 0;
+      usedTotal += used;
+      availableTotal += capacity;
+
+      // No "in use" class: the flow layer already paints over a bypass that is
+      // carrying, and because width is capacity while the flow's width is
+      // volume, a partly-used line shows as a narrow bright stroke inside a
+      // wider faint one — how full the pipe is, for free.
+      bypassLabels.get(bypass.id)!.textContent =
+        `${bypass.name}\n${mbd(used)} of ${mbd(capacity)} mb/d in use\n${bypass.source}`;
+    }
+    readoutBypass.textContent =
+      usedTotal > 0
+        ? `Ways around: ${mbd(usedTotal)} of ${mbd(availableTotal)} mb/d in use`
+        : "";
 
     reopen.hidden = allocation.closed.length === 0;
     reopen.textContent =

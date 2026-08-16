@@ -550,3 +550,52 @@ these entries at the end; it is not written directly.
   your own rule says two of three screenshot bugs were the tool. Your CDP
   harness is the third instance, and read literally the template line says to
   believe your broken Enter dispatch."
+
+---
+
+- **Date/time:** 2026-08-16, night
+- **Tag:** `[judgement]`
+- **What happened:** Half the argument was unrendered. The three reroutability
+  classes behave differently because of one physical fact — is there another way
+  round, and how wide is it — but nothing flows through a bypass at baseline, so
+  the alternatives were invisible until after a strait was closed. The visitor
+  could see that some closures hurt and others did not, with no visible reason
+  why.
+- **What I did instead of the obvious thing:** The obvious rendering is a legend
+  or a labelled list of pipelines. I drew them on the map instead, dormant, with
+  **stroke width taken from the same scale the flows use** — so Petroline reads
+  as visibly narrower than the traffic it is supposed to absorb, which is the
+  argument rather than a caption about it. Because width is capacity while a
+  flow's width is volume, a partly-used bypass now shows as a narrow bright
+  stroke inside a wider faint one: how full the pipe is, for free, with no extra
+  code. Two smaller calls: the layer is built once and never rebuilt, because
+  infrastructure is not a result; and the wording is "ways around", not "bypass
+  pipelines", because the Kiel Canal is one of the five and is a canal — the
+  dash pattern varies by `leg.kind` instead of the noun lying.
+- **How I knew it was right:** The tests passed and the page was still wrong,
+  which is the whole reason CLAUDE.md says to look. Reading the render showed
+  almost nothing on the map, so I measured rather than adjusted by eye: SUMED
+  spans 10px at 1920 and **4px at 390**, against a 7px dash period — the object
+  the argument depends on was drawing as less than one dash on a phone. Shorter
+  periods, chosen to fit at least two dashes into the shortest bypass, fixed it.
+  A second look then caught a plain bug: `.readout__bypass` had no CSS, so it
+  inherited the readout's own type and rendered *larger* than the line it
+  belongs beside, outranking the verdict. Verified at both marking viewports in
+  both states; the on-screen figures were cross-checked against `allocate()` and
+  `BYPASSES` rather than read off the pixels — 4.70 is petroline 3.2 plus adcop
+  1.5, and 8.26 is the capacity sum. Stroke colour came back
+  `rgb(120, 133, 152)` at opacity 1, exactly the `ink-faint` the new contrast
+  pairing declares, so that check describes what is actually on screen. 126 →
+  133 green.
+- **Citation:** this commit; the bypass layer in `src/render/view.ts`, the
+  measured dash periods in `styles.css`, and the
+  `the ways around are visible before they are needed` block in
+  `spec/interaction.test.ts`.
+- **New contrast pairing:** `ink-faint` on `water` at the 3:1 non-text
+  threshold. Drawn at full opacity on purpose — a translucent stroke would be
+  contrasting against a composite colour that appears nowhere in the palette,
+  which would make that check a fiction.
+- **Curated prompt:** "at baseline the bypass routes are invisible because
+  nothing flows through them. 'Is there another way round, and how wide is it'
+  is the physical reason the three classes behave differently. It is half the
+  argument, currently unrendered."

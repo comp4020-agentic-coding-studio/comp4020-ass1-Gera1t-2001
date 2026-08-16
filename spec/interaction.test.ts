@@ -2,6 +2,7 @@
 import { beforeAll, beforeEach, describe, expect, it, vi } from "vitest";
 import { CHOKEPOINTS } from "../src/data/chokepoints";
 import { FLOWS } from "../src/data/flows";
+import { BYPASSES } from "../src/data/network";
 import { allocate } from "../src/model/allocate";
 import type { ChokepointId } from "../src/model/types";
 import type { App } from "../src/ui/app";
@@ -469,6 +470,82 @@ describe("a section fragment still reaches its section", () => {
   it("does not scroll when the fragment carries state instead", () => {
     open("#closed=hormuz");
     expect(scrolled).not.toHaveBeenCalled();
+  });
+});
+
+describe("the ways around are visible before they are needed", () => {
+  // Half the argument is "is there another way round, and how wide is it".
+  // Until a strait is shut nothing flows through a bypass, so without this the
+  // visitor cannot see that the alternatives exist at all — only that some
+  // closures hurt and others do not, with no visible reason why.
+
+  /** Every number in a string, so a claim can be checked without matching its spelling. */
+  const numbersIn = (text: string) =>
+    [...text.matchAll(/\d+(?:\.\d+)?/g)].map((m) => Number(m[0]));
+
+  const totalCapacity = () =>
+    BYPASSES.reduce((sum, bypass) => sum + (bypass.capacityMbd ?? 0), 0);
+
+  it("draws every way around at baseline, when none is carrying anything", () => {
+    const page = open();
+    expect(
+      [...page.root.querySelectorAll("path.bypass")].map((p) => p.getAttribute("data-leg")),
+    ).toEqual(BYPASSES.map((b) => b.id));
+  });
+
+  it("draws them under the flows, so a bypass in use shows as in use", () => {
+    const page = open("#closed=hormuz");
+    const layers = [...page.root.querySelectorAll("svg > g")].map((g) =>
+      g.getAttribute("class"),
+    );
+    expect(layers.indexOf("bypasses")).toBeGreaterThanOrEqual(0);
+    expect(layers.indexOf("bypasses")).toBeLessThan(layers.indexOf("flows"));
+  });
+
+  it("says nothing about capacity while none is in use", () => {
+    const page = open();
+    expect(page.root.querySelector('[data-testid="bypass"]')!.textContent).toBe("");
+  });
+
+  it("reports what the ways around are carrying once one is closed", () => {
+    const page = open("#closed=hormuz");
+    const line = page.root.querySelector('[data-testid="bypass"]')!.textContent!;
+    const used = Object.values(
+      allocate(new Set<ChokepointId>(["hormuz"])).bypassUsageMbd,
+    ).reduce((sum, v) => sum + v, 0);
+
+    expect(
+      numbersIn(line).find((n) => Math.abs(n - used) < 0.005),
+      `no number in "${line}" matches the ${used} mb/d the model actually routes`,
+    ).toBeDefined();
+  });
+
+  it("states the capacity the data actually provides, not a number someone typed", () => {
+    const page = open("#closed=hormuz");
+    const line = page.root.querySelector('[data-testid="bypass"]')!.textContent!;
+    const expected = totalCapacity();
+
+    // Derived from BYPASSES, so a hardcoded figure cannot satisfy it: change a
+    // capacity in the data and this fails until the page follows. Comparing
+    // formatted strings would pass on a literal, which is the whole failure
+    // this test exists to catch.
+    expect(
+      numbersIn(line).find((n) => Math.abs(n - expected) < 0.005),
+      `no number in "${line}" equals the ${expected} mb/d BYPASSES provide`,
+    ).toBeDefined();
+  });
+
+  it("names each way around with its own capacity and source", () => {
+    const page = open();
+    for (const bypass of BYPASSES) {
+      const path = page.root.querySelector(`path.bypass[data-leg="${bypass.id}"]`)!;
+      const label = path.querySelector("title")!.textContent!;
+      expect(label, `${bypass.id} is unnamed`).toContain(bypass.name!);
+      // The data-honesty rule applies to anything shown, including a tooltip.
+      expect(label, `${bypass.id} shows a figure with no source`).toContain(
+        bypass.source.slice(0, 24),
+      );
+    }
   });
 });
 

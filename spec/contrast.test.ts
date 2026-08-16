@@ -79,6 +79,11 @@ const PAIRINGS: readonly Pairing[] = [
   { what: "a detoured flow on water", fg: "detour", bg: "water", min: AA_LARGE },
   { what: "stranded volume on water", fg: "stopped", bg: "water", min: AA_LARGE },
   { what: "a chokepoint ring on water", fg: "moving", bg: "water", min: AA_LARGE },
+  // The dormant ways around. Drawn at full opacity precisely so this pairing
+  // describes what is on screen — a translucent line would contrast against a
+  // colour that appears nowhere in the palette, and this check would be a
+  // fiction.
+  { what: "a dormant way around on water", fg: "ink-faint", bg: "water", min: AA_LARGE },
 ];
 
 describe("colour contrast", () => {

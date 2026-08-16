@@ -215,6 +215,36 @@ h1 {
     opacity 140ms ease;
 }
 
+/* The ways around, drawn whether or not anything is using them. Width is
+   capacity on the same scale the flows use, so Petroline reads as narrower
+   than the traffic it is meant to absorb — which is the argument.
+
+   Full opacity on purpose: the contrast check declares ink-faint against
+   water, and a translucent stroke would be contrasting against a colour that
+   exists nowhere in the palette, making that check a fiction. */
+.bypass {
+  fill: none;
+  stroke: var(--ink-faint);
+  stroke-linecap: butt;
+}
+
+/* Four meanings, four patterns — the file's existing rule. Solid is an
+   unaffected route, 8 4 a detour, 1.6 2.6 a pipeline in use; these two are a
+   capacity nobody is drawing on yet.
+
+   The periods are short because these are short: measured on the built page,
+   SUMED spans 10px at 1920 and 4px at 390. A 7px dash period drew it as less
+   than one dash — the object the argument depends on, rendering as nothing on
+   a phone. These fit at least two dashes into the shortest of them. */
+.bypass--pipeline {
+  stroke-dasharray: 1.5 1.75;
+}
+
+/* Not a pipe. The Kiel Canal is a waterway with a lock-sized ceiling. */
+.bypass--sea {
+  stroke-dasharray: 3 2.5;
+}
+
 /* Oil that cannot leave, piling up where it was loaded. */
 .strand {
   fill: color-mix(in srgb, var(--stopped) 22%, transparent);
@@ -335,6 +365,21 @@ h1 {
   border-top: 1px solid var(--edge);
   font-size: 0.8rem;
   color: var(--ink-dim);
+}
+
+/* Sits with the detour line as a second fact about the same closure, not above
+   the verdict in the hierarchy. Without this it inherits the readout's own
+   type and renders larger than the line it belongs beside — which is how it
+   first shipped to the screenshot. */
+.readout__bypass {
+  display: block;
+  margin-top: 0.35rem;
+  font-size: 0.8rem;
+  color: var(--ink-faint);
+}
+
+.readout__bypass:empty {
+  display: none;
 }
 
 .readout__class {

@@ -1087,3 +1087,33 @@ uncommon and the announced sentence is unaffected.
   guidance and about four minutes read aloud. Left for the author to decide.
 - **Citation:** this commit; `PROCESS.md` → "What I built", and the final section
   of `reflections/assignment-1.md`.
+
+---
+
+- **Date/time:** 2026-08-17, morning
+- **Tag:** `[routine]`
+- **What happened:** Two trims with different things protected. `PROCESS.md` was
+  sitting on the 600-word boundary, which hands the pass/fail decision to
+  whichever counting method a marker's tool uses; the reflection was 604 against
+  a 380 target.
+- **What I did instead of the obvious thing:** For `PROCESS.md`, cut connective
+  prose and colour only — "its own closed set, its own callback", "The payoff was
+  immediate", "Then that rule failed its own second incident" — and left every
+  citation, all four moments, and both graded jobs in each moment untouched. The
+  compressible material turned out to be thin, which is itself a reading of how
+  tight the file already was. For the reflection I applied the four authorised
+  cuts in order and **stopped at 516 rather than inventing a fifth**, because
+  the remaining 136 words cannot come out without touching either protected
+  material or passages that were not offered for cutting.
+- **How I knew it was right:** `PROCESS.md` is 565 whole-file and 553 excluding
+  headings and link URLs, so it clears 600 under either method with room. All
+  seven citations resolve and all four moments survive. Every protected item in
+  the reflection was checked back individually after the cuts: the verbatim
+  assertion, the blockquoted rule, five section headings, the `<output>`
+  explanation, the closing line, and the "could not have written / could decide"
+  pair.
+- **Reported, not decided:** the reflection is 516 against a 380 target. The
+  shortfall is the author's call, and the largest defensible cut is the opening
+  paragraph, whose content is now recorded in full in the `(no commit)` entry
+  above — a marker following that citation gets more than the reflection would.
+- **Citation:** this commit; `PROCESS.md` and `reflections/assignment-1.md`.

@@ -361,3 +361,49 @@ these entries at the end; it is not written directly.
 - **Curated prompt:** "decide and tell me what each of these means, because the
   predicate defines it: `#closed=hormuz`, `#closed=`, `#flows`, `#`, `""` — and
   note the initial read and the hashchange handler cannot use the same rule."
+
+---
+
+- **Date/time:** 2026-08-16, late afternoon
+- **Tag:** `[judgement]`
+- **What happened:** Fixing the nav bug fixed only half of it. The model now
+  survived a section nav, but the address bar was left reading `#flows` while
+  Hormuz was shut — so copying the URL shared baseline. On a page whose whole
+  premise is a shareable state, the permalink was now silently wrong after any
+  nav click, which is arguably worse than the reset it replaced: the reset was at
+  least visible.
+- **What I did instead of the obvious thing:** The tempting move is to accept it
+  and write a note in the colophon, since the state is at least preserved. I
+  rewrote the URL back to the state hash after the nav instead, because the
+  fragment is being asked to do two incompatible jobs — name a section and name
+  a state — and the state is the half worth sharing. But I only do it when there
+  is something to protect: with nothing closed, `#flows` is already an honest
+  description of the page, and stripping it would throw away the anchor and
+  spend a real cost for nothing.
+- **How I knew it was right:** The cost is a dead back-button step — the
+  fragment nav pushes its entry before the handler runs, so the stack ends up
+  with two adjacent identical URLs. I did not reason about that and move on; I
+  drove a real headless Chrome over CDP (no Playwright or Puppeteer in the repo,
+  but Node 24 has a global `WebSocket` and Chrome speaks CDP, which was enough
+  to press keys and read `document.activeElement`). Confirmed: one Back press
+  changes nothing, the second leaves the page. Predicted, accepted, and now
+  written into the comment beside the rewrite so it is documented rather than
+  discovered. The check that could have killed the whole approach was the skip
+  link — it exists for focus, not scroll, and a fragment nav sets the sequential
+  focus navigation starting point. Tab to it, activate, Tab again: focus landed
+  on the first switch inside `#chokepoints`, not back at the masthead, and
+  `scrollY` went 0 → 923. So the rewrite disturbs neither focus nor scroll. Had
+  it broken focus, the fix would have cost more than it bought and I would have
+  reverted it. 119 → 121 green.
+- **Citation:** this commit; the `KNOWN COST` comment in `src/ui/app.ts` and the
+  `the URL keeps describing the page` block in `spec/interaction.test.ts`.
+- **Assertion changed, deliberately:** the previous commit's test asserted
+  `location.hash === "#flows"` after a nav — the exact behaviour this commit
+  removes. Naming it rather than editing it quietly: its purpose was proving the
+  nav was not vacuous, and the `navigate()` helper already guarantees that
+  structurally by resolving only once `hashchange` has fired, so the line was
+  redundant before it was wrong.
+- **Curated prompt:** "a cost you did not count — a fragment nav pushes its entry
+  before your code runs, so Back changes nothing. I still think the trade is
+  right, but it must be documented in the code comment, not discovered by a
+  marker pressing Back."

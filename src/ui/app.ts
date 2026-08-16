@@ -65,7 +65,28 @@ export function start(root: HTMLElement): App {
     // read as "nothing is closed". Unlike the initial load, there is state here
     // worth protecting, so only a hash that claims something about the model
     // gets to replace it.
-    if (!carriesClosedState(location.hash)) return;
+    if (!carriesClosedState(location.hash)) {
+      // The model survives, but the address bar now says `#flows` while Hormuz
+      // is shut — copy it and you share baseline. The fragment is being asked
+      // to name a section and to name a state, and the state is the half worth
+      // sharing, so the section fragment is transient: it has already done its
+      // scrolling by the time this runs, and the URL goes back to describing
+      // the model.
+      //
+      // KNOWN COST: the fragment nav pushed its history entry before this ran,
+      // so the stack now holds two adjacent entries with the same URL. One back
+      // press moves between them and changes nothing — same URL, no hashchange,
+      // no visible response. That is the dead back-button step main.ts's
+      // original replaceState comment set out to avoid, reached by another
+      // route. It is accepted deliberately: a URL that lies about the page is
+      // worse than one inert back press. Only paid when there is state to
+      // protect — with nothing closed the fragment is already honest and is
+      // left alone.
+      if (closed.size > 0) {
+        history.replaceState(null, "", writeHash(closed) || location.pathname);
+      }
+      return;
+    }
     closed = readHash(location.hash);
     render();
   };

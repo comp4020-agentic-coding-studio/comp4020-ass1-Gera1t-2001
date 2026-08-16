@@ -300,7 +300,9 @@ describe("navigating the page does not reset the model", () => {
 
     await navigate("#flows");
 
-    expect(location.hash, "the nav should still have moved the URL").toBe("#flows");
+    // navigate() only resolves once hashchange has fired, so the nav is already
+    // proven to have happened; where the URL ends up afterwards is asserted by
+    // "the URL keeps describing the page" below.
     expect(
       page.switchFor("hormuz")!.getAttribute("aria-pressed"),
       "visiting a section fragment reopened a closed strait",
@@ -322,6 +324,34 @@ describe("navigating the page does not reset the model", () => {
 
     expect(page.switchFor("hormuz")!.getAttribute("aria-pressed")).toBe("false");
     expect(page.strandedText()).toBe("0.00");
+  });
+});
+
+describe("the URL keeps describing the page", () => {
+  // Preserving the model through a section nav leaves the other half wrong: the
+  // address bar says #flows while Hormuz is shut, so copying it shares
+  // baseline. This page sells its permalink, so the state wins and the section
+  // fragment is transient.
+
+  it("returns the URL to the state after a section nav", async () => {
+    const page = open();
+    page.switchFor("hormuz")!.click();
+
+    await navigate("#flows");
+
+    expect(readHash(location.hash)).toEqual(new Set<ChokepointId>(["hormuz"]));
+    expect(page.switchFor("hormuz")!.getAttribute("aria-pressed")).toBe("true");
+  });
+
+  it("leaves a section fragment alone when there is no state to lose", async () => {
+    open();
+
+    await navigate("#flows");
+
+    // Nothing is closed, so #flows is already an honest description of the
+    // page. Stripping it would throw away the anchor and buy nothing — and it
+    // would spend the dead back-press below for no reason.
+    expect(location.hash).toBe("#flows");
   });
 });
 

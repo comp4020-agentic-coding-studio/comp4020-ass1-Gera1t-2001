@@ -511,3 +511,42 @@ these entries at the end; it is not written directly.
 - **Curated prompt:** "the button removes itself from the DOM when activated,
   dropping focus to `<body>`. Either keep it rendered and disabled, or move
   focus to the heading with `tabindex="-1"`. Pick one, do it, say which and why."
+
+---
+
+- **Date/time:** 2026-08-16, evening
+- **Tag:** `[harness]`
+- **What happened:** My CDP script reported `FAIL: Back did not restore the
+  closed set`. The button was fine; the script's `Enter` was dispatched as
+  `keyDown`/`keyUp` with no `char` event, so Chrome never synthesised the
+  activation click and nothing was ever pressed. The page under test had not
+  changed because nothing had asked it to. That FAIL was indistinguishable from
+  a genuinely broken control — same output, same shape, same confidence — and I
+  nearly went looking for a bug in `pushState`.
+- **What I did instead of the obvious thing:** The obvious response is to fix
+  the script and move on; it cost ten minutes and nothing shipped wrong. But it
+  exposed a contradiction already sitting in `CLAUDE.md`: the template says
+  "treat a red check as authoritative — the page is wrong until the check is
+  green", while my own verification section says two of three screenshot-found
+  bugs were the tool. Read literally, the first line instructed me to believe my
+  own broken keypress. Nothing in the file said which rule applied when. I
+  amended both existing passages rather than adding a fourth rule, and drew the
+  line at provenance: a red from the committed roster — typecheck, build, lint,
+  the spec suite — is authoritative, because those are reviewed and run on every
+  push and have been wrong far less often than the code has; a red from a sensor
+  built for one question is a claim about the sensor until shown otherwise.
+- **How I knew it was right:** The test is whether the rule would have caught
+  this instance prospectively, not just described it afterwards. It would: the
+  fix it prescribes — make the sensor report a known-good case first — is
+  exactly the assertion the script lacked. Had it checked "the button fires at
+  all" before checking "Back undoes it", it would have named its own fault. That
+  is also why the line is about provenance rather than about screenshots: the
+  screenshot rule was already in the file and did not stop me, because a CDP
+  script did not look like a screenshot.
+- **Citation:** this commit; `CLAUDE.md` → the amended "attribute the red before
+  acting on it" bullet in "How to work in here", and the new harness-red bullet
+  in "Verifying what you actually shipped".
+- **Curated prompt:** "the template says treat a red check as authoritative;
+  your own rule says two of three screenshot bugs were the tool. Your CDP
+  harness is the third instance, and read literally the template line says to
+  believe your broken Enter dispatch."

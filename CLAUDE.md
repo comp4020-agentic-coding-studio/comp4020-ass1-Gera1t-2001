@@ -31,9 +31,16 @@ and see `spec/README.md` for how the checks in this repo relate to it.
   isn't.
 - When a check fails, read its output before changing anything. Each check below
   names what it measures, and the failure message is the instruction: it tells
-  you the file, the line, or the contract. Treat a red check as authoritative
-  --- the page is wrong until the check is green, not until you decide it should
-  be.
+  you the file, the line, or the contract. **Attribute the red before acting on
+  it**, because not every red comes from the same kind of sensor. A red from the
+  committed roster --- typecheck, build, lint, the spec suite --- is
+  authoritative: those run on every push, they are reviewed, and they have been
+  wrong far less often than the code has. The page is wrong until they are
+  green, not until you decide it should be. A red from a sensor you built for
+  this one question --- a screenshot, an ad-hoc CDP script, a one-off probe ---
+  is a claim about **the sensor** until you have shown otherwise. Make it report
+  a known-good case first; see "Verifying what you actually shipped" below for
+  what that costs when you skip it.
 - Commit when the checks pass. Never commit a red state.
 
 ## The checks (your sensors)
@@ -221,6 +228,17 @@ what held true regardless of what was being built.
   wrong, get a second, independent reading — `--dump-dom`, a computed value, a
   test — before changing code. Two of the three "bugs" found by screenshot in
   this repo were real; the third was the tool.
+- **A red from a harness you wrote ten minutes ago is a claim about the
+  harness.** The same rule as the screenshots, and it generalises past them: a
+  CDP script driving the page reported a clean `FAIL: Back did not restore the
+  closed set`, and the button it was supposedly testing was innocent. An `Enter`
+  dispatched as `keyDown`/`keyUp` without the accompanying `char` event never
+  makes Chrome synthesise the activation click, so nothing was ever pressed and
+  the page under test never changed. That failure is **indistinguishable from a
+  genuinely broken control** — same output, same shape, same confidence. Before
+  believing an ad-hoc sensor's red, make it report a case you already know is
+  good: had the script asserted "the button fires at all" first, it would have
+  named its own fault instead of the code's.
 - **Say plainly what wasn't checked.** If a change was only verified by
   `pnpm check` and not by looking at a real render, say so instead of implying
   full verification. That gap is what let the viewport bug above ship in the
